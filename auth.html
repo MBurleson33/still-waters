@@ -438,7 +438,7 @@ body {
 
       <!-- Heading -->
       <h1 class="auth-heading anim-1">Welcome<br><em>home.</em></h1>
-      <p class="auth-sub anim-2">Sign in to join the community.</p>
+      <p class="auth-sub anim-2">New here or returning — just sign in the same way you joined. We'll take care of the rest.</p>
 
       <!-- Buttons -->
       <div class="anim-3">
@@ -463,8 +463,11 @@ body {
             <rect x="2" y="4" width="14" height="11" rx="2"/>
             <path d="M2 7l7 4 7-4"/>
           </svg>
-          Continue with Email
+          Sign in with Email
         </button>
+        <p style="font-size:12px;font-weight:300;color:var(--stone);text-align:center;margin-top:-18px;margin-bottom:24px;line-height:1.6;">
+          No password needed — we'll email you a one-time sign-in link.
+        </p>
       </div>
 
       <p class="auth-terms anim-4">
@@ -569,7 +572,7 @@ function signInWithGoogle() {
   const btn = document.querySelector('.btn-google');
   btn.disabled = true;
   btn.innerHTML = '<span style="opacity:0.6">Redirecting…</span>';
-  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/auth');
+  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/feed');
   window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
 }
 
@@ -577,6 +580,7 @@ function signInWithGoogle() {
 function showEmailForm() {
   const existing = document.getElementById('email-form');
   if (existing) { existing.remove(); return; }
+
   const form = document.createElement('div');
   form.id = 'email-form';
   form.style.cssText = 'margin-top: 16px;';
@@ -601,7 +605,9 @@ function showEmailForm() {
 async function sendMagicLink() {
   const email = document.getElementById('magic-email').value.trim();
   const msg = document.getElementById('magic-msg');
+
   if (!email) return;
+
   const response = await fetch(`${SUPABASE_URL}/auth/v1/magiclink`, {
     method: 'POST',
     headers: {
@@ -610,9 +616,10 @@ async function sendMagicLink() {
     },
     body: JSON.stringify({
       email,
-      options: { emailRedirectTo: 'https://still-waters-fawn.vercel.app/auth' }
+      options: { emailRedirectTo: window.location.origin + '/feed' }
     })
   });
+
   msg.style.display = 'block';
   if (response.ok) {
     msg.style.color = '#4A7A8F';
@@ -623,33 +630,15 @@ async function sendMagicLink() {
   }
 }
 
-// ── HANDLE CALLBACK — save session from URL hash ──
-async function handleAuthCallback() {
+// ── CHECK IF ALREADY SIGNED IN ──
+async function checkSession() {
   const hash = window.location.hash;
-  if (!hash) return false;
-
-  const params = new URLSearchParams(hash.substring(1));
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-
-  if (!accessToken) return false;
-
-  // Save session to localStorage in Supabase format
-  const sessionKey = `sb-olhpiqxxofcwlkpvimug-auth-token`;
-  const session = {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    token_type: 'bearer',
-  };
-  localStorage.setItem(sessionKey, JSON.stringify(session));
-
-  // Clear the hash and redirect to feed
-  window.location.replace('/feed');
-  return true;
+  if (hash && hash.includes('access_token')) {
+    window.location.href = '/feed';
+  }
 }
 
-// ── INIT ──
-handleAuthCallback();
+checkSession();
 </script>
 </body>
 </html>
