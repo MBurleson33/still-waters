@@ -538,11 +538,15 @@ nav {
       <div class="cover-verse">"Be still, and know." — Psalm 46:10</div>
     </div>
     <div class="profile-identity">
-      <div class="profile-avatar-wrap">
+      <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()" style="cursor:pointer;" title="Change photo">
         <div class="profile-streak-ring"></div>
         <div class="profile-avatar" id="profileAvatar">M</div>
+        <div style="position:absolute;bottom:2px;right:2px;width:20px;height:20px;background:var(--water-dk);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;z-index:2;">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 7.5L3.5 5 7 1.5a1 1 0 011.5 1.5L5 6.5 2.5 9H1V7.5z" fill="white"/></svg>
+        </div>
       </div>
-      <button class="profile-edit-btn">
+      <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)" />
+      <button class="profile-edit-btn" onclick="showEditForm()">
         <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <path d="M2 10L9.5 2.5a1.5 1.5 0 012 2L6 11H2v-1z"/>
         </svg>
@@ -894,6 +898,88 @@ async function toggleSelah(btn, postId) {
       body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
     });
   }
+}
+
+// ── UPLOAD AVATAR ──
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const token = getToken();
+  const avatarEl = document.getElementById('profileAvatar');
+
+  // Show preview immediately
+  const reader = new FileReader();
+  reader.onload = e => {
+    avatarEl.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
+  };
+  reader.readAsDataURL(file);
+
+  // Resize to max 400px before uploading
+  const ext = file.type === 'image/png' ? 'png' : 'jpg';
+  const fileName = `${currentUser.id}.${ext}`;
+
+  // Upload to Supabase Storage
+  const uploadRes = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`,
+    {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': file.type,
+        'x-upsert': 'true'
+      },
+      body: file
+    }
+  );
+
+  if (!uploadRes.ok) {
+    console.error('Avatar upload failed:', await uploadRes.text());
+    return;
+  }
+
+  // Get public URL
+  const avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
+
+  // Save URL to profile
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Content-Profile': 'stillwaters',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ avatar_url: avatarUrl })
+    }
+  );
+}
+
+// ── SHOW EDIT FORM ──
+function showEditForm() {
+  // Simple inline edit for now — will expand later
+  const bio = document.getElementById('profileBio').textContent;
+  const newBio = prompt('Update your bio:', bio);
+  if (newBio === null) return;
+
+  const token = getToken();
+  fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Content-Profile': 'stillwaters',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ bio: newBio })
+  }).then(() => {
+    document.getElementById('profileBio').textContent = newBio;
+  });
 }
 
 // ── INIT ──
