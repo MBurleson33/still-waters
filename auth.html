@@ -577,6 +577,7 @@ function signInWithGoogle() {
 function showEmailForm() {
   const existing = document.getElementById('email-form');
   if (existing) { existing.remove(); return; }
+
   const form = document.createElement('div');
   form.id = 'email-form';
   form.style.cssText = 'margin-top: 16px;';
@@ -601,7 +602,9 @@ function showEmailForm() {
 async function sendMagicLink() {
   const email = document.getElementById('magic-email').value.trim();
   const msg = document.getElementById('magic-msg');
+
   if (!email) return;
+
   const response = await fetch(`${SUPABASE_URL}/auth/v1/magiclink`, {
     method: 'POST',
     headers: {
@@ -610,9 +613,10 @@ async function sendMagicLink() {
     },
     body: JSON.stringify({
       email,
-      options: { emailRedirectTo: 'https://still-waters-fawn.vercel.app/feed' }
+      options: { emailRedirectTo: window.location.origin + '/feed' }
     })
   });
+
   msg.style.display = 'block';
   if (response.ok) {
     msg.style.color = '#4A7A8F';
@@ -624,7 +628,7 @@ async function sendMagicLink() {
 }
 
 // ── CHECK IF ALREADY SIGNED IN ──
-function checkSession() {
+async function checkSession() {
   const hash = window.location.hash;
   if (hash && hash.includes('access_token')) {
     window.location.href = '/feed';
