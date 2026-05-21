@@ -565,25 +565,18 @@ const SUPABASE_URL = 'https://olhpiqxxofcwlkpvimug.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ';
 
 // ── GOOGLE OAUTH ──
-async function signInWithGoogle() {
+function signInWithGoogle() {
   const btn = document.querySelector('.btn-google');
-  btn.textContent = 'Redirecting…';
   btn.disabled = true;
-
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/feed')}`, {
-    method: 'GET',
-    headers: { 'apikey': SUPABASE_ANON_KEY }
-  });
-
-  // Supabase returns a redirect URL — follow it
-  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/feed')}`;
+  btn.innerHTML = '<span style="opacity:0.6">Redirecting…</span>';
+  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/feed');
+  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
 }
 
 // ── EMAIL MAGIC LINK ──
 function showEmailForm() {
   const existing = document.getElementById('email-form');
   if (existing) { existing.remove(); return; }
-
   const form = document.createElement('div');
   form.id = 'email-form';
   form.style.cssText = 'margin-top: 16px;';
@@ -608,9 +601,7 @@ function showEmailForm() {
 async function sendMagicLink() {
   const email = document.getElementById('magic-email').value.trim();
   const msg = document.getElementById('magic-msg');
-
   if (!email) return;
-
   const response = await fetch(`${SUPABASE_URL}/auth/v1/magiclink`, {
     method: 'POST',
     headers: {
@@ -619,10 +610,9 @@ async function sendMagicLink() {
     },
     body: JSON.stringify({
       email,
-      options: { emailRedirectTo: window.location.origin + '/feed' }
+      options: { emailRedirectTo: 'https://still-waters-fawn.vercel.app/feed' }
     })
   });
-
   msg.style.display = 'block';
   if (response.ok) {
     msg.style.color = '#4A7A8F';
@@ -634,7 +624,7 @@ async function sendMagicLink() {
 }
 
 // ── CHECK IF ALREADY SIGNED IN ──
-async function checkSession() {
+function checkSession() {
   const hash = window.location.hash;
   if (hash && hash.includes('access_token')) {
     window.location.href = '/feed';
