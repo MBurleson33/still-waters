@@ -528,12 +528,13 @@ async function submitPost() {
 
   const scriptureRef = document.getElementById('scriptureRef')?.value?.trim() || null;
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/stillwaters.posts`, {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'Content-Profile': 'stillwaters',
       'Prefer': 'return=representation'
     },
     body: JSON.stringify({
@@ -566,22 +567,30 @@ async function loadPosts() {
   const token = getToken();
   const feed = document.getElementById('feed');
 
+  console.log('Loading posts, token:', token ? 'found' : 'missing');
+
   const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/stillwaters.posts?select=*,profile:stillwaters.profiles(full_name,avatar_url,username)&order=created_at.desc&limit=30`,
+    `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(full_name,avatar_url,username)&order=created_at.desc&limit=30`,
     {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Accept-Profile': 'stillwaters'
       }
     }
   );
 
+  console.log('Posts response status:', response.status);
+
   if (!response.ok) {
-    feed.innerHTML = `<div style="text-align:center;padding:48px 0;color:var(--clay);font-size:14px;">Could not load posts.</div>`;
+    const err = await response.json();
+    console.error('Posts error:', err);
+    feed.innerHTML = `<div style="text-align:center;padding:48px 0;color:var(--clay);font-size:14px;">Could not load posts: ${err.message || response.status}</div>`;
     return;
   }
 
   const posts = await response.json();
+  console.log('Posts loaded:', posts.length);
   renderPosts(posts);
 }
 
