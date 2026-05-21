@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Still Waters — Prayer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sand:      #F5F0E8;
+  --linen:     #EDE7D9;
+  --stone:     #C8BBA8;
+  --clay:      #A89880;
+  --bark:      #6B5D4F;
+  --deep:      #3D322A;
+  --water:     #7BA7B8;
+  --water-lt:  #B8D4DE;
+  --water-dk:  #4A7A8F;
+  --water-xs:  #E8F2F6;
+  --sage:      #8FA68A;
+  --sage-lt:   #C8D9C5;
+  --sage-xs:   #EEF4ED;
+  --cream:     #FAF7F2;
+  --white:     #FFFFFF;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--sand);
+  color: var(--deep);
+  min-height: 100vh;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes prayerSlideDown {
+  from { opacity: 0; transform: translateY(-8px); max-height: 0; }
+  to   { opacity: 1; transform: translateY(0); max-height: 300px; }
+}
+
+.anim-1 { animation: fadeUp 0.6s 0.05s ease forwards; opacity: 0; }
+.anim-2 { animation: fadeUp 0.6s 0.15s ease forwards; opacity: 0; }
+.anim-3 { animation: fadeUp 0.6s 0.25s ease forwards; opacity: 0; }
+.anim-4 { animation: fadeUp 0.6s 0.35s ease forwards; opacity: 0; }
+.anim-5 { animation: fadeUp 0.6s 0.45s ease forwards; opacity: 0; }
+.anim-6 { animation: fadeUp 0.6s 0.55s ease forwards; opacity: 0; }
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(250,247,242,0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(200,187,168,0.35);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none;
+}
+.nav-logo svg { width: 22px; height: 22px; }
+.nav-logo-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 400; color: var(--deep);
+}
+.nav-logo-text span { color: var(--water-dk); }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-icon-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer;
+  color: var(--clay); transition: background 0.2s, color 0.2s;
+  position: relative;
+}
+.nav-icon-btn:hover { background: var(--linen); color: var(--bark); }
+.nav-icon-btn svg { width: 18px; height: 18px; }
+.nav-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 6px; height: 6px;
+  background: var(--water); border-radius: 50%;
+  border: 1.5px solid var(--cream);
+}
+.nav-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--water-lt);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px; color: var(--water-dk);
+  cursor: pointer; border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.nav-avatar:hover { border-color: var(--water); }
+
+/* ── LAYOUT ── */
+.layout {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 72px 16px 100px;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  margin-bottom: 20px;
+  padding: 0 2px;
+}
+.page-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.page-header-rule {
+  width: 28px; height: 2px;
+  background: var(--sage);
+  border-radius: 2px;
+}
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 400;
+  color: var(--deep); letter-spacing: 0.01em;
+}
+.page-title em { font-style: italic; color: var(--sage); }
+.page-sub {
+  font-size: 13px; font-weight: 300;
+  color: var(--clay); letter-spacing: 0.03em;
+  padding-left: 40px;
+}
+
+/* ── SUMMARY CARD ── */
+.summary-card {
+  background: var(--deep);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  overflow: hidden;
+}
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -20px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(143,166,138,0.15) 0%, transparent 65%);
+}
+.summary-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  position: relative;
+}
+.summary-stat + .summary-stat::before {
+  content: '';
+  position: absolute; left: 0; top: 15%; height: 70%;
+  width: 1px; background: rgba(255,255,255,0.08);
+}
+.summary-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 300;
+  color: var(--cream); line-height: 1;
+}
+.summary-value.sage { color: var(--sage-lt); }
+.summary-label {
+  font-size: 10px; font-weight: 400;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--stone);
+}
+
+/* ── FILTER TABS ── */
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.filter-tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--linen);
+  background: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 400;
+  color: var(--clay);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.filter-tab:hover { border-color: var(--stone); color: var(--bark); }
+.filter-tab.active {
+  border-color: var(--sage);
+  color: #4a6b46;
+  background: var(--sage-xs);
+}
+
+/* ── PRAYER CARD ── */
+.prayer-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 20px 22px 0;
+  box-shadow: 0 1px 3px rgba(61,50,42,0.04);
+  margin-bottom: 12px;
+  border-left: 3px solid rgba(143,166,138,0.45);
+  transition: box-shadow 0.2s;
+  overflow: hidden;
+}
+.prayer-card:hover { box-shadow: 0 2px 12px rgba(61,50,42,0.07); }
+
+/* Answered state */
+.prayer-card.answered {
+  border-left-color: var(--water);
+  opacity: 0.75;
+}
+.prayer-card.answered .prayer-body { text-decoration: none; }
+
+.prayer-meta {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.prayer-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; flex-shrink: 0;
+}
+.avatar-a { background: var(--water-lt);            color: var(--water-dk); }
+.avatar-b { background: rgba(143,166,138,0.3);      color: #4a6b46; }
+.avatar-c { background: var(--linen);               color: var(--bark); }
+.avatar-d { background: rgba(168,152,128,0.25);     color: var(--bark); }
+.avatar-e { background: rgba(123,167,184,0.2);      color: var(--water-dk); }
+
+.prayer-author { font-size: 14px; font-weight: 500; color: var(--deep); }
+.prayer-time   { font-size: 11px; color: var(--stone); margin-top: 1px; }
+
+.answered-badge {
+  margin-left: auto;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--water-dk); background: var(--water-xs);
+  padding: 3px 9px; border-radius: 20px;
+}
+.praying-badge {
+  margin-left: auto;
+  font-size: 11px; font-weight: 400;
+  color: #4a6b46;
+  display: flex; align-items: center; gap: 4px;
+}
+.praying-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--sage);
+  animation: fadeIn 1s ease infinite alternate;
+}
+
+.prayer-body {
+  font-size: 15px; font-weight: 300;
+  line-height: 1.75; color: var(--bark);
+  margin-bottom: 16px;
+}
+
+/* Actions row */
+.prayer-actions {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--linen);
+}
+.selah-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 20px;
+  border: 1.5px solid var(--linen);
+  background: none;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px; color: var(--clay);
+  cursor: pointer; transition: all 0.18s;
+}
+.selah-btn:hover { border-color: var(--water); color: var(--water-dk); background: var(--water-xs); }
+.selah-btn.active { border-color: var(--water); color: var(--water-dk); background: var(--water-xs); }
+.selah-count { font-family: 'DM Sans', sans-serif; font-size: 12px; }
+
+.pray-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 20px;
+  border: 1.5px solid var(--linen);
+  background: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--clay);
+  cursor: pointer; transition: all 0.18s;
+}
+.pray-btn:hover { border-color: var(--sage); color: #4a6b46; background: var(--sage-xs); }
+.pray-btn.active { border-color: var(--sage); color: #4a6b46; background: var(--sage-xs); }
+.pray-btn svg { width: 13px; height: 13px; }
+
+.comment-btn {
+  font-size: 13px; color: var(--clay);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-weight: 300;
+  padding: 5px 2px; transition: color 0.18s; margin-left: auto;
+}
+.comment-btn:hover { color: var(--bark); }
+
+/* ── PRAYER RESPONSE BOX ── */
+.prayer-response {
+  display: none;
+  border-top: 1px solid var(--linen);
+  padding: 14px 0 16px;
+  animation: prayerSlideDown 0.3s ease forwards;
+}
+.prayer-response.visible { display: block; }
+.prayer-response-label {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--sage); margin-bottom: 10px;
+}
+.prayer-textarea {
+  width: 100%; border: 1.5px solid var(--linen);
+  border-radius: 10px; padding: 12px 14px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 15px;
+  color: var(--bark); line-height: 1.65;
+  background: var(--cream); resize: none;
+  outline: none; transition: border-color 0.2s;
+  min-height: 80px;
+}
+.prayer-textarea:focus { border-color: var(--sage); }
+.prayer-textarea::placeholder { color: var(--stone); }
+.prayer-response-actions {
+  display: flex; align-items: center;
+  justify-content: flex-end; gap: 10px;
+  margin-top: 10px;
+}
+.prayer-cancel {
+  font-size: 13px; color: var(--clay);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: color 0.2s;
+}
+.prayer-cancel:hover { color: var(--bark); }
+.prayer-submit {
+  padding: 7px 18px; border-radius: 20px;
+  background: var(--sage); border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  color: white; cursor: pointer;
+  transition: background 0.2s;
+}
+.prayer-submit:hover { background: #6a8f65; }
+
+/* Existing prayer responses */
+.prayer-responses-list {
+  border-top: 1px solid var(--linen);
+  padding: 14px 0 16px;
+}
+.prayer-responses-label {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--stone); margin-bottom: 12px;
+}
+.prayer-response-item {
+  display: flex; gap: 10px; margin-bottom: 12px;
+}
+.prayer-response-item:last-child { margin-bottom: 0; }
+.response-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 12px; flex-shrink: 0; margin-top: 2px;
+}
+.response-bubble {
+  background: var(--cream);
+  border-radius: 0 10px 10px 10px;
+  padding: 9px 12px; flex: 1;
+}
+.response-name {
+  font-size: 11px; font-weight: 500;
+  color: var(--bark); margin-bottom: 3px;
+}
+.response-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 14px;
+  color: var(--bark); line-height: 1.55;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(250,247,242,0.95);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(200,187,168,0.35);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+  z-index: 100;
+}
+.bottom-nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; cursor: pointer;
+  color: var(--stone); transition: color 0.2s; padding: 0 20px;
+}
+.bottom-nav-btn.active { color: var(--water-dk); }
+.bottom-nav-btn svg { width: 22px; height: 22px; }
+.bottom-nav-label { font-size: 10px; font-weight: 400; letter-spacing: 0.05em; }
+
+@media (min-width: 640px) {
+  .bottom-nav { display: none; }
+  .layout { padding-bottom: 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="stillwaters-feed.html" class="nav-logo">
+    <svg viewBox="0 0 22 22" fill="none">
+      <path d="M11 1C11 1 5 8 5 12C5 15.314 7.686 18 11 18C14.314 18 17 15.314 17 12C17 8 11 1 11 1Z" fill="#4A7A8F" opacity="0.85"/>
+      <ellipse cx="11" cy="20" rx="6" ry="1.6" stroke="#7BA7B8" stroke-width="1" fill="none" opacity="0.4"/>
+    </svg>
+    <span class="nav-logo-text">Still <span>Waters</span></span>
+  </a>
+  <div class="nav-right">
+    <button class="nav-icon-btn">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M9 2a5 5 0 00-5 5v3l-1.5 2h13L14 10V7a5 5 0 00-5-5z"/>
+        <path d="M7.5 14.5a1.5 1.5 0 003 0"/>
+      </svg>
+      <div class="nav-dot"></div>
+    </button>
+    <div class="nav-avatar">M</div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header anim-1">
+    <div class="page-header-top">
+      <div class="page-header-rule"></div>
+      <div class="page-title">Prayer <em>requests</em></div>
+    </div>
+    <div class="page-sub">From people you follow · Chronological</div>
+  </div>
+
+  <!-- SUMMARY CARD -->
+  <div class="summary-card anim-2">
+    <div class="summary-stat">
+      <div class="summary-value">12</div>
+      <div class="summary-label">Open requests</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-value sage">47</div>
+      <div class="summary-label">You're praying for</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-value">3</div>
+      <div class="summary-label">Answered</div>
+    </div>
+  </div>
+
+  <!-- FILTER TABS -->
+  <div class="filter-tabs anim-3">
+    <button class="filter-tab active" onclick="setFilter(this, 'all')">All</button>
+    <button class="filter-tab" onclick="setFilter(this, 'praying')">Praying · 47</button>
+    <button class="filter-tab" onclick="setFilter(this, 'answered')">Answered · 3</button>
+  </div>
+
+  <!-- PRAYER CARDS -->
+
+  <!-- Card 1 — with responses visible -->
+  <div class="prayer-card anim-3">
+    <div class="prayer-meta">
+      <div class="prayer-avatar avatar-d">R</div>
+      <div>
+        <div class="prayer-author">Rachel B.</div>
+        <div class="prayer-time">2 hours ago</div>
+      </div>
+      <div class="praying-badge">
+        <div class="praying-dot"></div>
+        58 praying
+      </div>
+    </div>
+    <div class="prayer-body">My mom goes in for surgery tomorrow morning. She's at peace but I'm a little undone. If you think of it, please pray.</div>
+    <div class="prayer-actions">
+      <button class="selah-btn active" onclick="toggleSelah(this)">
+        <span>✦</span><span>Selah</span><span class="selah-count">· 58</span>
+      </button>
+      <button class="pray-btn active" onclick="togglePray(this)">
+        <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/>
+        </svg>
+        Praying
+      </button>
+      <button class="comment-btn" onclick="toggleResponse(this)">Write a prayer</button>
+    </div>
+    <div class="prayer-response" id="response-1">
+      <div class="prayer-response-label">Pray for Rachel</div>
+      <textarea class="prayer-textarea" placeholder="Father, I lift Rachel up to you…" rows="3"></textarea>
+      <div class="prayer-response-actions">
+        <button class="prayer-cancel" onclick="toggleResponse(this.closest('.prayer-card').querySelector('.comment-btn'))">Cancel</button>
+        <button class="prayer-submit">Send prayer</button>
+      </div>
+    </div>
+    <div class="prayer-responses-list">
+      <div class="prayer-responses-label">Prayers written · 4</div>
+      <div class="prayer-response-item">
+        <div class="response-avatar avatar-a">S</div>
+        <div class="response-bubble">
+          <div class="response-name">Sarah M.</div>
+          <div class="response-text">Lord, be close to Rachel and her mom. Give them both your peace that passes understanding.</div>
+        </div>
+      </div>
+      <div class="prayer-response-item">
+        <div class="response-avatar avatar-b">J</div>
+        <div class="response-bubble">
+          <div class="response-name">James T.</div>
+          <div class="response-text">Praying for steady hands for the surgeons and real rest for Rachel tonight.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="prayer-card anim-4">
+    <div class="prayer-meta">
+      <div class="prayer-avatar avatar-b">J</div>
+      <div>
+        <div class="prayer-author">James T.</div>
+        <div class="prayer-time">Yesterday</div>
+      </div>
+      <div class="praying-badge">
+        <div class="praying-dot"></div>
+        31 praying
+      </div>
+    </div>
+    <div class="prayer-body">Starting a new job Monday. Feeling called but also nervous. Would love your prayers for peace and clarity as I step into this.</div>
+    <div class="prayer-actions">
+      <button class="selah-btn" onclick="toggleSelah(this)">
+        <span>✦</span><span>Selah</span><span class="selah-count">· 31</span>
+      </button>
+      <button class="pray-btn" onclick="togglePray(this)">
+        <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/>
+        </svg>
+        Pray
+      </button>
+      <button class="comment-btn" onclick="toggleResponse(this)">Write a prayer</button>
+    </div>
+    <div class="prayer-response">
+      <div class="prayer-response-label">Pray for James</div>
+      <textarea class="prayer-textarea" placeholder="Lord, I ask for James…" rows="3"></textarea>
+      <div class="prayer-response-actions">
+        <button class="prayer-cancel" onclick="toggleResponse(this.closest('.prayer-card').querySelector('.comment-btn'))">Cancel</button>
+        <button class="prayer-submit">Send prayer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="prayer-card anim-4">
+    <div class="prayer-meta">
+      <div class="prayer-avatar avatar-c">D</div>
+      <div>
+        <div class="prayer-author">David K.</div>
+        <div class="prayer-time">2 days ago</div>
+      </div>
+      <div class="praying-badge">
+        <div class="praying-dot"></div>
+        19 praying
+      </div>
+    </div>
+    <div class="prayer-body">Our small group has been walking through a really hard season — a lot of grief and uncertainty. Praying we hold together and hold onto Jesus. Would love your agreement.</div>
+    <div class="prayer-actions">
+      <button class="selah-btn active" onclick="toggleSelah(this)">
+        <span>✦</span><span>Selah</span><span class="selah-count">· 19</span>
+      </button>
+      <button class="pray-btn active" onclick="togglePray(this)">
+        <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/>
+        </svg>
+        Praying
+      </button>
+      <button class="comment-btn" onclick="toggleResponse(this)">Write a prayer</button>
+    </div>
+    <div class="prayer-response">
+      <div class="prayer-response-label">Pray for David's group</div>
+      <textarea class="prayer-textarea" placeholder="Jesus, I ask for David's small group…" rows="3"></textarea>
+      <div class="prayer-response-actions">
+        <button class="prayer-cancel" onclick="toggleResponse(this.closest('.prayer-card').querySelector('.comment-btn'))">Cancel</button>
+        <button class="prayer-submit">Send prayer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4 — Answered -->
+  <div class="prayer-card answered anim-5">
+    <div class="prayer-meta">
+      <div class="prayer-avatar avatar-a">S</div>
+      <div>
+        <div class="prayer-author">Sarah M.</div>
+        <div class="prayer-time">1 week ago</div>
+      </div>
+      <div class="answered-badge">✓ Answered</div>
+    </div>
+    <div class="prayer-body">Asking for clarity on a big decision I've been sitting with for months. Thank you for praying — update coming.</div>
+    <div class="prayer-actions">
+      <button class="selah-btn active" onclick="toggleSelah(this)">
+        <span>✦</span><span>Selah</span><span class="selah-count">· 24</span>
+      </button>
+      <button class="comment-btn">See update</button>
+    </div>
+  </div>
+
+  <!-- Card 5 -->
+  <div class="prayer-card anim-5">
+    <div class="prayer-meta">
+      <div class="prayer-avatar avatar-e">L</div>
+      <div>
+        <div class="prayer-author">Laura H.</div>
+        <div class="prayer-time">3 days ago</div>
+      </div>
+      <div class="praying-badge">
+        <div class="praying-dot"></div>
+        8 praying
+      </div>
+    </div>
+    <div class="prayer-body">My son has been struggling at school — not academically, just relationally. He feels alone. Praying for one good friend for him this semester.</div>
+    <div class="prayer-actions">
+      <button class="selah-btn" onclick="toggleSelah(this)">
+        <span>✦</span><span>Selah</span><span class="selah-count">· 8</span>
+      </button>
+      <button class="pray-btn" onclick="togglePray(this)">
+        <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/>
+        </svg>
+        Pray
+      </button>
+      <button class="comment-btn" onclick="toggleResponse(this)">Write a prayer</button>
+    </div>
+    <div class="prayer-response">
+      <div class="prayer-response-label">Pray for Laura's son</div>
+      <textarea class="prayer-textarea" placeholder="Lord, I ask for this child…" rows="3"></textarea>
+      <div class="prayer-response-actions">
+        <button class="prayer-cancel" onclick="toggleResponse(this.closest('.prayer-card').querySelector('.comment-btn'))">Cancel</button>
+        <button class="prayer-submit">Send prayer</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bottom-nav-btn">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+    </svg>
+    <span class="bottom-nav-label">Feed</span>
+  </button>
+  <button class="bottom-nav-btn active">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M11 2C11 2 5 8 5 12.5C5 15.985 7.686 18.8 11 18.8C14.314 18.8 17 15.985 17 12.5C17 8 11 2 11 2Z"/>
+    </svg>
+    <span class="bottom-nav-label">Prayer</span>
+  </button>
+  <button class="bottom-nav-btn">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <rect x="3" y="2" width="12" height="17" rx="1.5"/>
+      <path d="M3 8h12M7 2v6M11 2v6"/>
+    </svg>
+    <span class="bottom-nav-label">Scripture</span>
+  </button>
+  <button class="bottom-nav-btn">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="11" cy="8" r="4"/>
+      <path d="M3 20c0-4 3.582-7 8-7s8 3 8 7"/>
+    </svg>
+    <span class="bottom-nav-label">Profile</span>
+  </button>
+</div>
+
+<script>
+function toggleSelah(btn) {
+  const countEl = btn.querySelector('.selah-count');
+  const current = parseInt(countEl.textContent.replace(/\D/g,''));
+  if (btn.classList.contains('active')) {
+    btn.classList.remove('active');
+    countEl.textContent = '· ' + (current - 1);
+  } else {
+    btn.classList.add('active');
+    countEl.textContent = '· ' + (current + 1);
+  }
+}
+
+function togglePray(btn) {
+  const isActive = btn.classList.contains('active');
+  btn.classList.toggle('active');
+  const textNode = [...btn.childNodes].find(n => n.nodeType === 3);
+  if (textNode) textNode.textContent = isActive ? ' Pray' : ' Praying';
+}
+
+function toggleResponse(commentBtn) {
+  const card = commentBtn.closest('.prayer-card');
+  const responseBox = card.querySelector('.prayer-response');
+  const isVisible = responseBox.classList.contains('visible');
+  responseBox.classList.toggle('visible', !isVisible);
+  if (!isVisible) {
+    responseBox.querySelector('textarea').focus();
+  }
+}
+
+function setFilter(tab, filter) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  // In production this would filter the actual data
+}
+</script>
+
+</body>
+</html>
