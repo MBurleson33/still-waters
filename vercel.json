@@ -1,9 +1,10 @@
 {
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/feed", "destination": "/public/feed.html" },
     { "source": "/auth", "destination": "/public/auth.html" },
     { "source": "/profile", "destination": "/public/profile.html" },
     { "source": "/prayer", "destination": "/public/prayer.html" },
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+    { "source": "/", "destination": "/public/index.html" }
   ]
 }
