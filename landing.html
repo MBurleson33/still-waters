@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Still Waters — A place to pause.</title>
+<meta name="description" content="A faith community built around prayer, Scripture, and unhurried connection. Coming soon.">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sand:      #F5F0E8;
+  --linen:     #EDE7D9;
+  --stone:     #C8BBA8;
+  --clay:      #A89880;
+  --bark:      #6B5D4F;
+  --deep:      #3D322A;
+  --water:     #7BA7B8;
+  --water-lt:  #B8D4DE;
+  --water-dk:  #4A7A8F;
+  --water-xs:  #E8F2F6;
+  --sage:      #8FA68A;
+  --cream:     #FAF7F2;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--cream);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--deep);
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes ripple {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes dropFall {
+  0%   { transform: translateY(-8px); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+.anim-1 { animation: fadeUp 0.9s ease forwards; opacity: 0; }
+.anim-2 { animation: fadeUp 0.9s 0.15s ease forwards; opacity: 0; }
+.anim-3 { animation: fadeUp 0.9s 0.3s ease forwards; opacity: 0; }
+.anim-4 { animation: fadeUp 0.9s 0.45s ease forwards; opacity: 0; }
+.anim-5 { animation: fadeUp 0.9s 0.6s ease forwards; opacity: 0; }
+.anim-6 { animation: fadeIn 1.2s 0.8s ease forwards; opacity: 0; }
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 20px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(250,247,242,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(200,187,168,0.3);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.nav-logo-mark svg { width: 28px; height: 28px; }
+.nav-logo-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--deep);
+  letter-spacing: 0.01em;
+}
+.nav-logo-text span { color: var(--water-dk); }
+.nav-pill {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clay);
+  border: 1px solid var(--stone);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ripple background */
+.ripple-bg {
+  position: absolute;
+  bottom: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 300px;
+  pointer-events: none;
+}
+.ripple-ring {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px solid var(--water);
+  animation: ripple 4s ease-out infinite;
+}
+.ripple-ring:nth-child(1) { width: 100px; height: 40px; animation-delay: 0s; opacity: 0.4; }
+.ripple-ring:nth-child(2) { width: 220px; height: 88px; animation-delay: 0.8s; opacity: 0.3; }
+.ripple-ring:nth-child(3) { width: 380px; height: 152px; animation-delay: 1.6s; opacity: 0.2; }
+.ripple-ring:nth-child(4) { width: 560px; height: 224px; animation-delay: 2.4s; opacity: 0.1; }
+
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--water-dk);
+  margin-bottom: 24px;
+}
+
+.hero-logo-mark {
+  margin-bottom: 28px;
+  animation: dropFall 1s 0.1s ease forwards, float 4s 1.5s ease-in-out infinite;
+  opacity: 0;
+}
+.hero-logo-mark svg { width: 72px; height: 72px; }
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(56px, 10vw, 104px);
+  font-weight: 300;
+  line-height: 0.95;
+  color: var(--deep);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--water-dk);
+}
+
+.hero-subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--clay);
+  margin-bottom: 36px;
+  letter-spacing: 0.02em;
+}
+
+.hero-desc {
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--bark);
+  max-width: 480px;
+  margin: 0 auto 48px;
+}
+
+.coming-soon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--water-dk);
+  background: var(--water-xs);
+  border: 1px solid var(--water-lt);
+  padding: 10px 24px;
+  border-radius: 40px;
+}
+.coming-soon-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--water);
+  border-radius: 50%;
+  animation: fadeIn 1s 0.5s ease infinite alternate;
+}
+
+.hero-verse {
+  margin-top: 56px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--stone);
+  letter-spacing: 0.03em;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--stone), transparent);
+  margin: 0 64px;
+}
+
+/* ── PILLARS ── */
+.pillars {
+  padding: 100px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.pillars-header {
+  text-align: center;
+  margin-bottom: 72px;
+}
+.pillars-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--clay);
+  margin-bottom: 16px;
+}
+.pillars-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 300;
+  color: var(--deep);
+  line-height: 1.15;
+}
+.pillars-heading em {
+  font-style: italic;
+  color: var(--water-dk);
+}
+
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  background: var(--linen);
+}
+.pillar {
+  background: var(--cream);
+  padding: 52px 48px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s ease;
+}
+.pillar:hover { background: var(--sand); }
+.pillar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 48px;
+  width: 32px; height: 2px;
+  background: var(--water);
+  transition: width 0.4s ease;
+}
+.pillar:hover::after { width: 80px; }
+
+.pillar-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 64px;
+  font-weight: 300;
+  color: var(--linen);
+  line-height: 1;
+  margin-bottom: 8px;
+  letter-spacing: -0.03em;
+}
+.pillar-icon {
+  margin-bottom: 20px;
+}
+.pillar-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--deep);
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+.pillar-title em { font-style: italic; color: var(--water-dk); }
+.pillar-body {
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--bark);
+}
+
+/* ── PREVIEW ── */
+.preview {
+  background: var(--deep);
+  padding: 100px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.preview::before {
+  content: '';
+  position: absolute;
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 400px;
+  background: radial-gradient(ellipse, rgba(123,167,184,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.preview-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+.preview-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--water);
+  margin-bottom: 16px;
+}
+.preview-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 300;
+  color: var(--cream);
+  margin-bottom: 16px;
+  line-height: 1.15;
+}
+.preview-heading em { font-style: italic; color: var(--water-lt); }
+.preview-sub {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--stone);
+  margin-bottom: 64px;
+  line-height: 1.7;
+}
+
+/* Mock feed */
+.mock-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: left;
+}
+.mock-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 14px;
+  padding: 22px;
+  backdrop-filter: blur(8px);
+  transition: background 0.3s;
+}
+.mock-card:hover { background: rgba(255,255,255,0.08); }
+
+.mock-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.mock-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.mock-avatar-a { background: rgba(123,167,184,0.25); color: var(--water-lt); }
+.mock-avatar-b { background: rgba(143,166,138,0.25); color: #b8d4b3; }
+.mock-name { font-size: 13px; font-weight: 500; color: var(--cream); }
+.mock-time { font-size: 11px; color: var(--stone); margin-top: 1px; }
+.mock-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+.mock-badge-scripture { color: var(--water-lt); border: 1px solid rgba(123,167,184,0.35); }
+.mock-badge-prayer { color: #b8d4b3; border: 1px solid rgba(143,166,138,0.35); }
+
+.mock-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--stone);
+  margin-bottom: 14px;
+}
+.mock-scripture-block {
+  background: rgba(123,167,184,0.08);
+  border-left: 2px solid var(--water);
+  padding: 10px 14px;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 14px;
+}
+.mock-scripture-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--water-lt);
+  line-height: 1.6;
+}
+.mock-scripture-ref {
+  font-size: 11px;
+  color: var(--water);
+  margin-top: 4px;
+}
+.mock-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.mock-selah {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  color: var(--water-lt);
+  background: rgba(123,167,184,0.12);
+  border: 1px solid rgba(123,167,184,0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+  cursor: default;
+}
+.mock-selah-count { font-family: 'DM Sans', sans-serif; font-size: 12px; }
+.mock-comment {
+  font-size: 12px;
+  color: var(--stone);
+}
+
+/* ── PHILOSOPHY ── */
+.philosophy {
+  padding: 100px 24px;
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+.philosophy-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--clay);
+  margin-bottom: 24px;
+}
+.philosophy-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--deep);
+  line-height: 1.35;
+  margin-bottom: 24px;
+}
+.philosophy-quote strong {
+  font-weight: 400;
+  font-style: normal;
+  color: var(--water-dk);
+}
+.philosophy-body {
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.85;
+  color: var(--bark);
+  margin-bottom: 40px;
+}
+.philosophy-rule {
+  width: 40px;
+  height: 1px;
+  background: var(--stone);
+  margin: 0 auto 20px;
+}
+.philosophy-ref {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--stone);
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--deep);
+  padding: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.footer-logo-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--cream);
+}
+.footer-logo-text span { color: var(--water-lt); }
+.footer-note {
+  font-size: 12px;
+  color: var(--stone);
+  letter-spacing: 0.05em;
+}
+.footer-verse {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--clay);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  nav { padding: 16px 24px; }
+  .pillars-grid { grid-template-columns: 1fr; }
+  .pillar { padding: 40px 28px; }
+  footer { padding: 36px 24px; flex-direction: column; text-align: center; }
+  .hero-title { letter-spacing: -0.01em; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2C14 2 8 10 8 14.5C8 17.985 10.686 20.8 14 20.8C17.314 20.8 20 17.985 20 14.5C20 10 14 2 14 2Z" fill="#4A7A8F" opacity="0.85"/>
+        <ellipse cx="14" cy="23" rx="7" ry="2" stroke="#7BA7B8" stroke-width="1" fill="none" opacity="0.5"/>
+        <ellipse cx="14" cy="23" rx="4" ry="1.1" stroke="#7BA7B8" stroke-width="0.8" fill="none" opacity="0.35"/>
+      </svg>
+    </div>
+    <span class="nav-logo-text">Still <span>Waters</span></span>
+  </a>
+  <div class="nav-pill">Coming Soon</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="ripple-bg">
+    <div class="ripple-ring"></div>
+    <div class="ripple-ring"></div>
+    <div class="ripple-ring"></div>
+    <div class="ripple-ring"></div>
+  </div>
+
+  <p class="hero-eyebrow anim-1">A faith community</p>
+
+  <div class="hero-logo-mark">
+    <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M36 4C36 4 20 24 20 34C20 43.941 27.163 52 36 52C44.837 52 52 43.941 52 34C52 24 36 4 36 4Z" fill="#4A7A8F" opacity="0.85"/>
+      <ellipse cx="36" cy="58" rx="18" ry="5" stroke="#7BA7B8" stroke-width="1.5" fill="none" opacity="0.4"/>
+      <ellipse cx="36" cy="58" rx="11" ry="3" stroke="#7BA7B8" stroke-width="1.2" fill="none" opacity="0.28"/>
+      <ellipse cx="36" cy="58" rx="5" ry="1.4" fill="#7BA7B8" opacity="0.25"/>
+    </svg>
+  </div>
+
+  <h1 class="hero-title anim-2">Still<br><em>Waters</em></h1>
+  <p class="hero-subtitle anim-3">A place to pause.</p>
+
+  <p class="hero-desc anim-4">
+    Most social media is white water rapids — noise, outrage, comparison, scroll. Still Waters is the other thing. A community where your faith isn't a niche interest. It's just home.
+  </p>
+
+  <div class="coming-soon-badge anim-5">Something is coming</div>
+
+  <p class="hero-verse anim-6">"He leads me beside still waters." — Psalm 23:2</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- PILLARS -->
+<section class="pillars">
+  <div class="pillars-header">
+    <p class="pillars-eyebrow">Built differently</p>
+    <h2 class="pillars-heading">Not another social app.<br><em>Something entirely different.</em></h2>
+  </div>
+
+  <div class="pillars-grid">
+    <div class="pillar">
+      <div class="pillar-number">01</div>
+      <div class="pillar-title">Prayer as a<br><em>first-class feature</em></div>
+      <p class="pillar-body">You don't like a post here. You pause for it. The Selah interaction — named for the breath mark woven through the Psalms — means: <em>I stopped. I prayed for you.</em> That's a fundamentally different kind of social interaction.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-number">02</div>
+      <div class="pillar-title">Scripture as<br><em>infrastructure</em></div>
+      <p class="pillar-body">The Word isn't a feature you can toggle on. It's woven into the fabric — a daily verse at the center of your feed, the ability to anchor any post to a passage, and a community that holds each other to it.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-number">03</div>
+      <div class="pillar-title">No algorithm.<br><em>No noise.</em></div>
+      <p class="pillar-body">Your feed is chronological. Nobody is paying to reach you. There are no viral mechanics designed to spike your cortisol. What you see is simply what the people you follow are sharing. Quiet on purpose.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-number">04</div>
+      <div class="pillar-title">Accountability<br><em>and growth</em></div>
+      <p class="pillar-body">Small groups. Reading streaks. Check-ins. The things the church has always done together in living rooms and Sunday school classes — finally built for how we actually live now.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PREVIEW -->
+<section class="preview">
+  <div class="preview-inner">
+    <p class="preview-eyebrow">A glimpse</p>
+    <h2 class="preview-heading">Faith, shared<br><em>without apology.</em></h2>
+    <p class="preview-sub">This is what your feed looks like when the noise is gone.</p>
+
+    <div class="mock-feed">
+
+      <!-- Scripture post -->
+      <div class="mock-card">
+        <div class="mock-meta">
+          <div class="mock-avatar mock-avatar-a">S</div>
+          <div>
+            <div class="mock-name">Sarah M.</div>
+            <div class="mock-time">2 hours ago</div>
+          </div>
+          <div class="mock-badge mock-badge-scripture">Scripture</div>
+        </div>
+        <div class="mock-body">This verse has been following me all week. Resting in it today.</div>
+        <div class="mock-scripture-block">
+          <div class="mock-scripture-text">"He makes me lie down in green pastures. He leads me beside still waters. He restores my soul."</div>
+          <div class="mock-scripture-ref">Psalm 23:2–3 — ESV</div>
+        </div>
+        <div class="mock-actions">
+          <div class="mock-selah">✦ Selah <span class="mock-selah-count">· 14</span></div>
+          <div class="mock-comment">3 comments</div>
+        </div>
+      </div>
+
+      <!-- Prayer request -->
+      <div class="mock-card">
+        <div class="mock-meta">
+          <div class="mock-avatar mock-avatar-b">J</div>
+          <div>
+            <div class="mock-name">James T.</div>
+            <div class="mock-time">Yesterday</div>
+          </div>
+          <div class="mock-badge mock-badge-prayer">Prayer</div>
+        </div>
+        <div class="mock-body">Starting a new job Monday. Feeling called but also nervous. Would love your prayers for peace and clarity as I step into this.</div>
+        <div class="mock-actions">
+          <div class="mock-selah">✦ Selah <span class="mock-selah-count">· 31 praying</span></div>
+          <div class="mock-comment">Pray</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section class="philosophy">
+  <p class="philosophy-eyebrow">Why we're building this</p>
+  <div class="philosophy-quote">
+    "There is a hunger for community that <strong>goes deeper than content.</strong>"
+  </div>
+  <p class="philosophy-body">
+    Christians have been sharing their faith online for decades — in comment sections, in Facebook groups, in Instagram captions that feel slightly out of place. There's never been a space built specifically for this. A place where prayer is the primary language. Where the Word is the anchor. Where slowing down is the whole point.
+  </p>
+  <p class="philosophy-body">
+    Still Waters isn't trying to be the biggest platform. It's trying to be the truest one.
+  </p>
+  <div class="philosophy-rule"></div>
+  <p class="philosophy-ref">"Be still, and know that I am God." — Psalm 46:10</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">
+    <svg viewBox="0 0 28 28" fill="none" width="24" height="24">
+      <path d="M14 2C14 2 8 10 8 14.5C8 17.985 10.686 20.8 14 20.8C17.314 20.8 20 17.985 20 14.5C20 10 14 2 14 2Z" fill="#7BA7B8" opacity="0.8"/>
+      <ellipse cx="14" cy="23" rx="7" ry="2" stroke="#7BA7B8" stroke-width="1" fill="none" opacity="0.4"/>
+    </svg>
+    <span class="footer-logo-text">Still <span>Waters</span></span>
+  </div>
+  <span class="footer-note">© 2026 · Coming Soon</span>
+  <span class="footer-verse">"He leads me beside still waters." — Psalm 23:2</span>
+</footer>
+
+</body>
+</html>
