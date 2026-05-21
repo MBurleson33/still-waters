@@ -1,39 +1,641 @@
-// api/auth.js
-// Handles the Google OAuth callback and redirects to the feed
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Still Waters — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-const SUPABASE_URL = 'https://olhpiqxxofcwlkpvimug.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-
-export default async function handler(req, res) {
-  const { code, error } = req.query;
-
-  // OAuth error from Google
-  if (error) {
-    return res.redirect('/?error=' + encodeURIComponent(error));
-  }
-
-  // Exchange code for session
-  if (code) {
-    const response = await fetch(
-      `${SUPABASE_URL}/auth/v1/token?grant_type=pkce`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ auth_code: code }),
-      }
-    );
-
-    if (response.ok) {
-      // Redirect to feed on success
-      return res.redirect('/feed');
-    } else {
-      return res.redirect('/auth?error=auth_failed');
-    }
-  }
-
-  // No code — redirect back to auth
-  return res.redirect('/auth');
+:root {
+  --sand:      #F5F0E8;
+  --linen:     #EDE7D9;
+  --stone:     #C8BBA8;
+  --clay:      #A89880;
+  --bark:      #6B5D4F;
+  --deep:      #3D322A;
+  --water:     #7BA7B8;
+  --water-lt:  #B8D4DE;
+  --water-dk:  #4A7A8F;
+  --water-xs:  #E8F2F6;
+  --white:     #FFFFFF;
 }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--white);
+  color: var(--deep);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dropFall {
+  0%   { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes rippleOut {
+  0%   { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+.anim-1 { animation: fadeUp 0.7s 0.1s ease forwards; opacity: 0; }
+.anim-2 { animation: fadeUp 0.7s 0.22s ease forwards; opacity: 0; }
+.anim-3 { animation: fadeUp 0.7s 0.34s ease forwards; opacity: 0; }
+.anim-4 { animation: fadeUp 0.7s 0.46s ease forwards; opacity: 0; }
+.anim-5 { animation: fadeUp 0.7s 0.58s ease forwards; opacity: 0; }
+
+/* ── LAYOUT ── */
+.page {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* ── LEFT PANEL — AUTH ── */
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 56px;
+  position: relative;
+}
+
+.auth-back {
+  position: absolute;
+  top: 32px; left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--clay);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.auth-back:hover { color: var(--bark); }
+.auth-back svg { width: 14px; height: 14px; }
+
+.auth-content {
+  width: 100%;
+  max-width: 340px;
+}
+
+/* Logo */
+.auth-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+  animation: dropFall 0.8s ease forwards;
+}
+.auth-logo-mark {
+  margin-bottom: 14px;
+  position: relative;
+  width: 52px; height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-logo-mark svg.drop { width: 52px; height: 52px; position: relative; z-index: 1; }
+.auth-logo-mark .ripple-dot {
+  position: absolute;
+  bottom: 2px; left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--water-lt);
+  animation: rippleOut 3s ease-out infinite;
+}
+.auth-logo-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--deep);
+  letter-spacing: 0.01em;
+}
+.auth-logo-name span { color: var(--water-dk); }
+.auth-logo-tagline {
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stone);
+  margin-top: 4px;
+}
+
+/* Heading */
+.auth-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 300;
+  color: var(--deep);
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.auth-heading em { font-style: italic; color: var(--water-dk); }
+.auth-sub {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--clay);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.auth-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--linen);
+}
+.auth-divider-text {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--stone);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* Google button */
+.btn-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 13px 20px;
+  background: var(--white);
+  border: 1.5px solid var(--linen);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--bark);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  margin-bottom: 16px;
+}
+.btn-google:hover {
+  border-color: var(--stone);
+  background: #FAFAFA;
+  box-shadow: 0 2px 12px rgba(61,50,42,0.06);
+}
+.btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* Email option */
+.btn-email {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 20px;
+  background: var(--white);
+  border: 1.5px solid var(--linen);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--bark);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  margin-bottom: 28px;
+}
+.btn-email:hover {
+  border-color: var(--stone);
+  background: #FAFAFA;
+  box-shadow: 0 2px 12px rgba(61,50,42,0.06);
+}
+.btn-email svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--clay); }
+
+/* Terms */
+.auth-terms {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--stone);
+  text-align: center;
+  line-height: 1.6;
+}
+.auth-terms a {
+  color: var(--water-dk);
+  text-decoration: none;
+}
+.auth-terms a:hover { text-decoration: underline; }
+
+/* Verse */
+.auth-verse {
+  margin-top: 48px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--stone);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── RIGHT PANEL — AMBIANCE ── */
+.ambiance-panel {
+  background: var(--deep);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background glow */
+.ambiance-panel::before {
+  content: '';
+  position: absolute;
+  top: 20%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(123,167,184,0.14) 0%, transparent 65%);
+  pointer-events: none;
+}
+.ambiance-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 10%; right: 10%;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(143,166,138,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.ambiance-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 380px;
+  width: 100%;
+}
+
+.ambiance-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--water);
+  margin-bottom: 28px;
+}
+
+/* Feature previews */
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 48px;
+}
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.feature-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.feature-icon-water { background: rgba(123,167,184,0.15); }
+.feature-icon-sage  { background: rgba(143,166,138,0.15); }
+.feature-icon-sand  { background: rgba(168,152,128,0.15); }
+.feature-icon-bark  { background: rgba(200,187,168,0.1); }
+.feature-icon svg { width: 18px; height: 18px; }
+
+.feature-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--water-lt);
+  margin-bottom: 3px;
+  line-height: 1.2;
+}
+.feature-body {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--stone);
+  line-height: 1.6;
+}
+
+/* Mini mock card */
+.ambiance-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 14px;
+  padding: 20px;
+}
+.ambiance-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ambiance-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(123,167,184,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px;
+  color: var(--water-lt);
+}
+.ambiance-name { font-size: 13px; font-weight: 500; color: var(--cream); }
+.ambiance-time { font-size: 11px; color: var(--stone); }
+.ambiance-badge {
+  margin-left: auto;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--water-lt);
+  border: 1px solid rgba(123,167,184,0.3);
+  padding: 2px 8px; border-radius: 20px;
+}
+.ambiance-body {
+  font-size: 13px; font-weight: 300;
+  color: var(--stone); line-height: 1.65;
+  margin-bottom: 14px;
+}
+.ambiance-actions {
+  display: flex; align-items: center; gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.ambiance-selah {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  color: var(--water-lt);
+  background: rgba(123,167,184,0.1);
+  border: 1px solid rgba(123,167,184,0.25);
+  padding: 4px 12px; border-radius: 20px;
+}
+.ambiance-comment { font-size: 12px; color: var(--stone); }
+
+/* ── FOOTER ── */
+.page-footer {
+  padding: 20px 56px;
+  border-top: 1px solid var(--linen);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+.page-footer-note {
+  font-size: 12px;
+  color: var(--stone);
+  letter-spacing: 0.04em;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .page { grid-template-columns: 1fr; }
+  .ambiance-panel { display: none; }
+  .auth-panel { padding: 48px 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- LEFT: AUTH -->
+  <div class="auth-panel">
+
+    <a href="stillwaters-landing.html" class="auth-back">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </a>
+
+    <div class="auth-content">
+
+      <!-- Logo -->
+      <div class="auth-logo">
+        <img src="/logos/Still Waters Logo - Stacked Color.png" alt="Still Waters" style="height: 110px; width: auto; margin-bottom: 8px;" />
+        <div class="auth-logo-tagline">A place to pause</div>
+      </div>
+
+      <!-- Heading -->
+      <h1 class="auth-heading anim-1">Welcome<br><em>home.</em></h1>
+      <p class="auth-sub anim-2">Sign in to join the community.</p>
+
+      <!-- Buttons -->
+      <div class="anim-3">
+        <button class="btn-google" onclick="signInWithGoogle()">
+          <svg viewBox="0 0 20 20" fill="none">
+            <path d="M19.6 10.23c0-.68-.06-1.36-.18-2H10v3.79h5.4a4.6 4.6 0 01-2 3.02v2.5h3.24c1.9-1.75 2.96-4.32 2.96-7.31z" fill="#4285F4"/>
+            <path d="M10 20c2.7 0 4.97-.9 6.62-2.42l-3.24-2.5c-.9.6-2.05.96-3.38.96-2.6 0-4.8-1.75-5.59-4.11H1.06v2.57A9.99 9.99 0 0010 20z" fill="#34A853"/>
+            <path d="M4.41 11.93A5.99 5.99 0 014.18 10c0-.67.12-1.32.23-1.93V5.5H1.06A9.99 9.99 0 000 10c0 1.61.39 3.13 1.06 4.5l3.35-2.57z" fill="#FBBC05"/>
+            <path d="M10 3.96c1.47 0 2.79.5 3.83 1.5l2.86-2.86C14.96.9 12.69 0 10 0A9.99 9.99 0 001.06 5.5l3.35 2.57C5.2 5.71 7.4 3.96 10 3.96z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="auth-divider">
+          <div class="auth-divider-line"></div>
+          <div class="auth-divider-text">or</div>
+          <div class="auth-divider-line"></div>
+        </div>
+
+        <button class="btn-email" onclick="showEmailForm()">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <rect x="2" y="4" width="14" height="11" rx="2"/>
+            <path d="M2 7l7 4 7-4"/>
+          </svg>
+          Continue with Email
+        </button>
+      </div>
+
+      <p class="auth-terms anim-4">
+        By continuing, you agree to our<br>
+        <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      </p>
+
+      <p class="auth-verse anim-5">
+        "He leads me beside still waters."<br>Psalm 23:2
+      </p>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: AMBIANCE -->
+  <div class="ambiance-panel">
+    <div class="ambiance-inner">
+
+      <p class="ambiance-label">What's waiting for you</p>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon feature-icon-water">
+            <svg viewBox="0 0 18 18" fill="none">
+              <path d="M9 1C9 1 4 7 4 10.5C4 13.538 6.239 16 9 16C11.761 16 14 13.538 14 10.5C14 7 9 1 9 1Z" fill="#7BA7B8" opacity="0.9"/>
+            </svg>
+          </div>
+          <div>
+            <div class="feature-title">Prayer, first</div>
+            <div class="feature-body">Selah a post and mean something. Every ✦ is a real pause, a real prayer.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon feature-icon-sage">
+            <svg viewBox="0 0 18 18" fill="none" stroke="#8FA68A" stroke-width="1.5" stroke-linecap="round">
+              <rect x="3" y="2" width="9" height="13" rx="1"/>
+              <path d="M3 6h9M6 2v4M9 2v4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="feature-title">Scripture as anchor</div>
+            <div class="feature-body">A daily verse. Anchor any post to a passage. The Word woven in.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon feature-icon-sand">
+            <svg viewBox="0 0 18 18" fill="none" stroke="#A89880" stroke-width="1.5" stroke-linecap="round">
+              <path d="M3 5h12M3 9h8M3 13h5"/>
+            </svg>
+          </div>
+          <div>
+            <div class="feature-title">No algorithm</div>
+            <div class="feature-body">Chronological. Quiet. What you see is simply what people you follow are sharing.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon feature-icon-bark">
+            <svg viewBox="0 0 18 18" fill="none" stroke="#C8BBA8" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="9" cy="6" r="3"/>
+              <path d="M3 16c0-3 2.686-5 6-5s6 2 6 5"/>
+            </svg>
+          </div>
+          <div>
+            <div class="feature-title">Your people</div>
+            <div class="feature-body">Follow friends, share faith, grow together. Community the way it was meant to be.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini preview card -->
+      <div class="ambiance-card">
+        <div class="ambiance-card-meta">
+          <div class="ambiance-avatar">R</div>
+          <div>
+            <div class="ambiance-name">Rachel B.</div>
+            <div class="ambiance-time">Just now</div>
+          </div>
+          <div class="ambiance-badge">Prayer</div>
+        </div>
+        <div class="ambiance-body">Heading into a hard conversation today. Just asking for peace and the right words.</div>
+        <div class="ambiance-actions">
+          <div class="ambiance-selah">✦ Selah · 8 praying</div>
+          <div class="ambiance-comment">Pray</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="page-footer">
+  <p class="page-footer-note">Still Waters · © 2026 · Faith, unhurried.</p>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://olhpiqxxofcwlkpvimug.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ';
+
+// ── GOOGLE OAUTH ──
+function signInWithGoogle() {
+  const btn = document.querySelector('.btn-google');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="opacity:0.6">Redirecting…</span>';
+  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/feed');
+  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
+}
+
+// ── EMAIL MAGIC LINK ──
+function showEmailForm() {
+  const existing = document.getElementById('email-form');
+  if (existing) { existing.remove(); return; }
+
+  const form = document.createElement('div');
+  form.id = 'email-form';
+  form.style.cssText = 'margin-top: 16px;';
+  form.innerHTML = `
+    <input
+      id="magic-email"
+      type="email"
+      placeholder="your@email.com"
+      style="width:100%;padding:12px 14px;border:1.5px solid #EDE7D9;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;color:#3D322A;background:#FAF7F2;outline:none;margin-bottom:10px;"
+      onkeydown="if(event.key==='Enter') sendMagicLink()"
+    />
+    <button
+      onclick="sendMagicLink()"
+      style="width:100%;padding:12px;background:#4A7A8F;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:white;cursor:pointer;"
+    >Send magic link</button>
+    <p id="magic-msg" style="font-size:13px;color:#A89880;text-align:center;margin-top:10px;display:none;"></p>
+  `;
+  document.querySelector('.btn-email').after(form);
+  document.getElementById('magic-email').focus();
+}
+
+async function sendMagicLink() {
+  const email = document.getElementById('magic-email').value.trim();
+  const msg = document.getElementById('magic-msg');
+
+  if (!email) return;
+
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/magiclink`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({
+      email,
+      options: { emailRedirectTo: window.location.origin + '/feed' }
+    })
+  });
+
+  msg.style.display = 'block';
+  if (response.ok) {
+    msg.style.color = '#4A7A8F';
+    msg.textContent = 'Check your email — a link is on its way.';
+  } else {
+    msg.style.color = '#c0392b';
+    msg.textContent = 'Something went wrong. Please try again.';
+  }
+}
+
+// ── CHECK IF ALREADY SIGNED IN ──
+async function checkSession() {
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    window.location.href = '/feed';
+  }
+}
+
+checkSession();
+</script>
+</body>
+</html>
