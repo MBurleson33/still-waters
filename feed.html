@@ -567,10 +567,8 @@ async function loadPosts() {
   const token = getToken();
   const feed = document.getElementById('feed');
 
-  console.log('Loading posts, token:', token ? 'found' : 'missing');
-
   const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(full_name,avatar_url,username)&order=created_at.desc&limit=30`,
+    `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(full_name,avatar_url,username),selahs(user_id)&order=created_at.desc&limit=30`,
     {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
@@ -580,17 +578,13 @@ async function loadPosts() {
     }
   );
 
-  console.log('Posts response status:', response.status);
-
   if (!response.ok) {
     const err = await response.json();
-    console.error('Posts error:', err);
     feed.innerHTML = `<div style="text-align:center;padding:48px 0;color:var(--clay);font-size:14px;">Could not load posts: ${err.message || response.status}</div>`;
     return;
   }
 
   const posts = await response.json();
-  console.log('Posts loaded:', posts.length);
   renderPosts(posts);
 }
 
@@ -615,6 +609,8 @@ function renderPosts(posts) {
     const typeLabel = post.type.charAt(0).toUpperCase() + post.type.slice(1);
     const tagClass = `tag-${post.type}`;
     const isPrayer = post.type === 'prayer';
+    const selahCount = post.selahs ? post.selahs.length : 0;
+    const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser?.id) : false;
 
     const scriptureBlock = post.scripture_ref ? `
       <div class="post-scripture-block">
@@ -635,10 +631,10 @@ function renderPosts(posts) {
         <div class="post-body">${post.body}</div>
         ${scriptureBlock}
         <div class="post-actions">
-          <button class="selah-btn" onclick="toggleSelah(this, '${post.id}')">
+          <button class="selah-btn ${hasSelahed ? 'active' : ''}" onclick="toggleSelah(this, '${post.id}')">
             <span>✦</span>
             <span>Selah</span>
-            <span class="selah-count">· 0</span>
+            <span class="selah-count">· ${selahCount}</span>
           </button>
           <button class="action-btn">${isPrayer ? 'Pray' : 'Share'}</button>
           <button class="action-btn">Comment</button>
@@ -660,15 +656,46 @@ function getTimeAgo(dateStr) {
 }
 
 // ── SELAH TOGGLE ──
-function toggleSelah(btn, postId) {
+async function toggleSelah(btn, postId) {
+  if (!currentUser) return;
+  const token = getToken();
   const countEl = btn.querySelector('.selah-count');
   const current = parseInt(countEl.textContent.replace(/\D/g,''));
-  if (btn.classList.contains('active')) {
-    btn.classList.remove('active');
-    countEl.textContent = '· ' + (current - 1);
+  const isActive = btn.classList.contains('active');
+
+  // Optimistic UI update
+  btn.classList.toggle('active');
+  countEl.textContent = '· ' + (isActive ? current - 1 : current + 1);
+
+  if (isActive) {
+    // Remove selah
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&post_id=eq.${postId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+          'Content-Profile': 'stillwaters'
+        }
+      }
+    );
   } else {
-    btn.classList.add('active');
-    countEl.textContent = '· ' + (current + 1);
+    // Add selah
+    await fetch(`${SUPABASE_URL}/rest/v1/selahs`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Content-Profile': 'stillwaters',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        post_id: postId
+      })
+    });
   }
 }
 
