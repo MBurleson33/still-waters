@@ -442,7 +442,7 @@ body {
 
       <!-- Buttons -->
       <div class="anim-3">
-        <button class="btn-google" onclick="alert('Google OAuth — connect Supabase to wire this up.')">
+        <button class="btn-google" onclick="signInWithGoogle()">
           <svg viewBox="0 0 20 20" fill="none">
             <path d="M19.6 10.23c0-.68-.06-1.36-.18-2H10v3.79h5.4a4.6 4.6 0 01-2 3.02v2.5h3.24c1.9-1.75 2.96-4.32 2.96-7.31z" fill="#4285F4"/>
             <path d="M10 20c2.7 0 4.97-.9 6.62-2.42l-3.24-2.5c-.9.6-2.05.96-3.38.96-2.6 0-4.8-1.75-5.59-4.11H1.06v2.57A9.99 9.99 0 0010 20z" fill="#34A853"/>
@@ -458,7 +458,7 @@ body {
           <div class="auth-divider-line"></div>
         </div>
 
-        <button class="btn-email" onclick="alert('Magic link email — connect Supabase to wire this up.')">
+        <button class="btn-email" onclick="showEmailForm()">
           <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
             <rect x="2" y="4" width="14" height="11" rx="2"/>
             <path d="M2 7l7 4 7-4"/>
@@ -560,5 +560,88 @@ body {
   <p class="page-footer-note">Still Waters · © 2026 · Faith, unhurried.</p>
 </div>
 
+<script>
+const SUPABASE_URL = 'https://olhpiqxxofcwlkpvimug.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ';
+
+// ── GOOGLE OAUTH ──
+async function signInWithGoogle() {
+  const btn = document.querySelector('.btn-google');
+  btn.textContent = 'Redirecting…';
+  btn.disabled = true;
+
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/feed')}`, {
+    method: 'GET',
+    headers: { 'apikey': SUPABASE_ANON_KEY }
+  });
+
+  // Supabase returns a redirect URL — follow it
+  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/feed')}`;
+}
+
+// ── EMAIL MAGIC LINK ──
+function showEmailForm() {
+  const existing = document.getElementById('email-form');
+  if (existing) { existing.remove(); return; }
+
+  const form = document.createElement('div');
+  form.id = 'email-form';
+  form.style.cssText = 'margin-top: 16px;';
+  form.innerHTML = `
+    <input
+      id="magic-email"
+      type="email"
+      placeholder="your@email.com"
+      style="width:100%;padding:12px 14px;border:1.5px solid #EDE7D9;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;color:#3D322A;background:#FAF7F2;outline:none;margin-bottom:10px;"
+      onkeydown="if(event.key==='Enter') sendMagicLink()"
+    />
+    <button
+      onclick="sendMagicLink()"
+      style="width:100%;padding:12px;background:#4A7A8F;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:white;cursor:pointer;"
+    >Send magic link</button>
+    <p id="magic-msg" style="font-size:13px;color:#A89880;text-align:center;margin-top:10px;display:none;"></p>
+  `;
+  document.querySelector('.btn-email').after(form);
+  document.getElementById('magic-email').focus();
+}
+
+async function sendMagicLink() {
+  const email = document.getElementById('magic-email').value.trim();
+  const msg = document.getElementById('magic-msg');
+
+  if (!email) return;
+
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/magiclink`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({
+      email,
+      options: { emailRedirectTo: window.location.origin + '/feed' }
+    })
+  });
+
+  msg.style.display = 'block';
+  if (response.ok) {
+    msg.style.color = '#4A7A8F';
+    msg.textContent = 'Check your email — a link is on its way.';
+  } else {
+    msg.style.color = '#c0392b';
+    msg.textContent = 'Something went wrong. Please try again.';
+  }
+}
+
+// ── CHECK IF ALREADY SIGNED IN ──
+async function checkSession() {
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    window.location.href = '/feed';
+  }
+}
+
+checkSession();
+</script>
 </body>
 </html>
