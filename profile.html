@@ -517,7 +517,7 @@ nav {
 
 <!-- NAV -->
 <nav>
-  <a href="stillwaters-feed.html" class="nav-logo">
+  <a href="/feed" class="nav-logo">
     <img src="/logos/Still Waters Logo - Horizontal Color.png" alt="Still Waters" style="height: 26px; width: auto;" />
   </a>
   <div class="nav-right">
@@ -540,7 +540,7 @@ nav {
     <div class="profile-identity">
       <div class="profile-avatar-wrap">
         <div class="profile-streak-ring"></div>
-        <div class="profile-avatar">M</div>
+        <div class="profile-avatar" id="profileAvatar">M</div>
       </div>
       <button class="profile-edit-btn">
         <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -548,25 +548,25 @@ nav {
         </svg>
         Edit profile
       </button>
-      <div class="profile-name">Matthew B.</div>
-      <div class="profile-handle">@matthewb</div>
-      <div class="profile-bio">Husband, dad, follower of Jesus. Broken and grateful. Finding faith in the ordinary and the hard.</div>
+      <div class="profile-name" id="profileName">Loading…</div>
+      <div class="profile-handle" id="profileHandle">@…</div>
+      <div class="profile-bio" id="profileBio"></div>
 
       <div class="profile-stats">
         <div class="stat-item">
-          <div class="stat-value">84</div>
+          <div class="stat-value" id="statPosts">—</div>
           <div class="stat-label">Posts</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">312</div>
+          <div class="stat-value" id="statFollowers">—</div>
           <div class="stat-label">Followers</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value">201</div>
+          <div class="stat-value" id="statFollowing">—</div>
           <div class="stat-label">Following</div>
         </div>
         <div class="stat-item">
-          <div class="stat-value water">1.4k</div>
+          <div class="stat-value water" id="statSelahs">—</div>
           <div class="stat-label">Selahs given</div>
         </div>
       </div>
@@ -609,7 +609,7 @@ nav {
         </div>
         <div class="faith-field-content">
           <div class="faith-field-label">Currently reading</div>
-          <div class="faith-field-value">The Psalms · Slow and steady</div>
+          <div class="faith-field-value" id="currentlyReading">The Psalms · Slow and steady</div>
         </div>
       </div>
       <div class="faith-field">
@@ -620,7 +620,7 @@ nav {
         </div>
         <div class="faith-field-content">
           <div class="faith-field-label">Testimony</div>
-          <div class="faith-field-value">Came to faith in my late twenties through a season of loss. Still being put back together. Still grateful for it.</div>
+          <div class="faith-field-value" id="testimony">Came to faith in my late twenties through a season of loss. Still being put back together. Still grateful for it.</div>
         </div>
       </div>
       <div class="faith-field">
@@ -632,7 +632,7 @@ nav {
         </div>
         <div class="faith-field-content">
           <div class="faith-field-label">Spiritual gifts</div>
-          <div class="faith-field-value">Encouragement · Teaching · Discernment</div>
+          <div class="faith-field-value" id="spiritualGifts">Encouragement · Teaching · Discernment</div>
         </div>
       </div>
     </div>
@@ -644,63 +644,8 @@ nav {
       <div class="posts-header-rule"></div>
       <div class="posts-header-title">My <em>posts</em></div>
     </div>
-
-    <!-- Post 1 -->
-    <div class="post-card">
-      <div class="post-meta">
-        <div class="post-time">2 days ago</div>
-        <div class="post-type-tag tag-thought">Thought</div>
-      </div>
-      <div class="post-body">Reminded today that obedience often looks boring from the outside. Just showing up, doing the quiet thing, trusting that it matters. It does.</div>
-      <div class="post-actions">
-        <button class="selah-btn active" onclick="toggleSelah(this)">
-          <span>✦</span>
-          <span>Selah</span>
-          <span class="selah-count">· 22</span>
-        </button>
-        <button class="action-btn">Share</button>
-        <button class="action-btn">Comment · 7</button>
-      </div>
-    </div>
-
-    <!-- Post 2 -->
-    <div class="post-card prayer-card">
-      <div class="post-meta">
-        <div class="post-time">4 days ago</div>
-        <div class="post-type-tag tag-prayer">Prayer</div>
-      </div>
-      <div class="post-body">Hard week. Not going to pretend otherwise. Just asking for steadiness and the grace to keep going. Thank you for praying.</div>
-      <div class="post-actions">
-        <button class="selah-btn active" onclick="toggleSelah(this)">
-          <span>✦</span>
-          <span>Selah</span>
-          <span class="selah-count">· 47</span>
-        </button>
-        <button class="action-btn">Pray</button>
-        <button class="action-btn">Comment · 11</button>
-      </div>
-    </div>
-
-    <!-- Post 3 -->
-    <div class="post-card">
-      <div class="post-meta">
-        <div class="post-time">1 week ago</div>
-        <div class="post-type-tag tag-scripture">Scripture</div>
-      </div>
-      <div class="post-body">Starting the week here.</div>
-      <div class="post-scripture-block">
-        <div class="post-scripture-text">"The Lord is my shepherd; I shall not want. He makes me lie down in green pastures. He leads me beside still waters."</div>
-        <div class="post-scripture-ref">Psalm 23:1–2 — ESV</div>
-      </div>
-      <div class="post-actions">
-        <button class="selah-btn active" onclick="toggleSelah(this)">
-          <span>✦</span>
-          <span>Selah</span>
-          <span class="selah-count">· 33</span>
-        </button>
-        <button class="action-btn">Share</button>
-        <button class="action-btn">Comment · 5</button>
-      </div>
+    <div id="postsList">
+      <div style="text-align:center;padding:32px 0;color:var(--clay);font-size:14px;">Loading…</div>
     </div>
 
   </div>
@@ -708,13 +653,13 @@ nav {
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <button class="bottom-nav-btn">
+  <button class="bottom-nav-btn" onclick="window.location.href='/feed'">
     <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
       <path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
     </svg>
     <span class="bottom-nav-label">Feed</span>
   </button>
-  <button class="bottom-nav-btn">
+  <button class="bottom-nav-btn" onclick="window.location.href='/prayer'">
     <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
       <path d="M11 2C11 2 5 8 5 12.5C5 15.985 7.686 18.8 11 18.8C14.314 18.8 17 15.985 17 12.5C17 8 11 2 11 2Z"/>
     </svg>
@@ -737,17 +682,222 @@ nav {
 </div>
 
 <script>
-function toggleSelah(btn) {
+const SUPABASE_URL = 'https://olhpiqxxofcwlkpvimug.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ';
+
+let currentUser = null;
+
+function getToken() {
+  const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (!key) return null;
+  try {
+    const session = JSON.parse(localStorage.getItem(key));
+    return session?.access_token || null;
+  } catch { return null; }
+}
+
+// ── LOAD PROFILE ──
+async function loadProfile() {
+  const token = getToken();
+  if (!token) { window.location.href = '/auth'; return; }
+
+  // Get current user
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
+  });
+  if (!userRes.ok) { window.location.href = '/auth'; return; }
+  currentUser = await userRes.json();
+
+  // Get profile data
+  const profileRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}&select=*`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Accept-Profile': 'stillwaters'
+      }
+    }
+  );
+  const profiles = await profileRes.json();
+  const profile = profiles[0] || {};
+
+  // Get post count
+  const postsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=id,type,body,scripture_ref,scripture_text,created_at,selahs(user_id)&order=created_at.desc`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Accept-Profile': 'stillwaters'
+      }
+    }
+  );
+  const posts = postsRes.ok ? await postsRes.json() : [];
+
+  // Get selahs given count
+  const selahsRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Accept-Profile': 'stillwaters'
+      }
+    }
+  );
+  const selahs = selahsRes.ok ? await selahsRes.json() : [];
+
+  // Get follow counts
+  const followersRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/follows?following_id=eq.${currentUser.id}&select=id`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Accept-Profile': 'stillwaters'
+      }
+    }
+  );
+  const followers = followersRes.ok ? await followersRes.json() : [];
+
+  const followingRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${currentUser.id}&select=id`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Accept-Profile': 'stillwaters'
+      }
+    }
+  );
+  const following = followingRes.ok ? await followingRes.json() : [];
+
+  renderProfile(profile, posts, selahs.length, followers.length, following.length);
+}
+
+// ── RENDER PROFILE ──
+function renderProfile(profile, posts, selahCount, followerCount, followingCount) {
+  const name = profile.full_name || currentUser?.user_metadata?.full_name || 'Your Name';
+  const username = profile.username || 'username';
+  const bio = profile.bio || '';
+  const initial = name[0].toUpperCase();
+  const avatarUrl = profile.avatar_url || currentUser?.user_metadata?.avatar_url;
+
+  // Avatar
+  const avatarEl = document.getElementById('profileAvatar');
+  if (avatarUrl) {
+    avatarEl.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
+  } else {
+    avatarEl.textContent = initial;
+  }
+
+  // Name, handle, bio
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('profileHandle').textContent = '@' + username;
+  document.getElementById('profileBio').textContent = bio || 'Add a bio to tell people about yourself.';
+
+  // Stats
+  document.getElementById('statPosts').textContent = posts.length;
+  document.getElementById('statFollowers').textContent = followerCount;
+  document.getElementById('statFollowing').textContent = followingCount;
+  document.getElementById('statSelahs').textContent = selahCount >= 1000
+    ? (selahCount / 1000).toFixed(1) + 'k'
+    : selahCount;
+
+  // Faith fields
+  if (profile.currently_reading) {
+    document.getElementById('currentlyReading').textContent = profile.currently_reading;
+  }
+  if (profile.testimony) {
+    document.getElementById('testimony').textContent = profile.testimony;
+  }
+  if (profile.spiritual_gifts) {
+    document.getElementById('spiritualGifts').textContent = profile.spiritual_gifts;
+  }
+
+  // Posts
+  renderPosts(posts);
+}
+
+// ── RENDER POSTS ──
+function renderPosts(posts) {
+  const container = document.getElementById('postsList');
+  if (!posts.length) {
+    container.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--clay);font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;">Nothing shared yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = posts.map(post => {
+    const timeAgo = getTimeAgo(post.created_at);
+    const typeLabel = post.type.charAt(0).toUpperCase() + post.type.slice(1);
+    const isPrayer = post.type === 'prayer';
+    const selahCount = post.selahs ? post.selahs.length : 0;
+    const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser?.id) : false;
+
+    const scriptureBlock = post.scripture_ref ? `
+      <div class="post-scripture-block">
+        <div class="post-scripture-text">${post.scripture_text || post.scripture_ref}</div>
+        <div class="post-scripture-ref">${post.scripture_ref}</div>
+      </div>` : '';
+
+    return `
+      <div class="post-card ${isPrayer ? 'prayer-card' : ''}">
+        <div class="post-meta">
+          <div class="post-time">${timeAgo}</div>
+          <div class="post-type-tag tag-${post.type}">${typeLabel}</div>
+        </div>
+        <div class="post-body">${post.body}</div>
+        ${scriptureBlock}
+        <div class="post-actions">
+          <button class="selah-btn ${hasSelahed ? 'active' : ''}" onclick="toggleSelah(this, '${post.id}')">
+            <span>✦</span><span>Selah</span>
+            <span class="selah-count">· ${selahCount}</span>
+          </button>
+          <button class="action-btn">${isPrayer ? 'Pray' : 'Share'}</button>
+          <button class="action-btn">Comment</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── TIME AGO ──
+function getTimeAgo(dateStr) {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const seconds = Math.floor((now - date) / 1000);
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+  if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+  if (seconds < 604800) return Math.floor(seconds / 86400) + 'd ago';
+  return date.toLocaleDateString();
+}
+
+// ── SELAH TOGGLE ──
+async function toggleSelah(btn, postId) {
+  if (!currentUser) return;
+  const token = getToken();
   const countEl = btn.querySelector('.selah-count');
   const current = parseInt(countEl.textContent.replace(/\D/g,''));
-  if (btn.classList.contains('active')) {
-    btn.classList.remove('active');
-    countEl.textContent = '· ' + (current - 1);
+  const isActive = btn.classList.contains('active');
+  btn.classList.toggle('active');
+  countEl.textContent = '· ' + (isActive ? current - 1 : current + 1);
+  if (isActive) {
+    await fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&post_id=eq.${postId}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+    });
   } else {
-    btn.classList.add('active');
-    countEl.textContent = '· ' + (current + 1);
+    await fetch(`${SUPABASE_URL}/rest/v1/selahs`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
+    });
   }
 }
+
+// ── INIT ──
+loadProfile();
 </script>
 
 </body>
