@@ -569,7 +569,7 @@ function signInWithGoogle() {
   const btn = document.querySelector('.btn-google');
   btn.disabled = true;
   btn.innerHTML = '<span style="opacity:0.6">Redirecting…</span>';
-  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/feed');
+  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/auth');
   window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
 }
 
@@ -577,7 +577,6 @@ function signInWithGoogle() {
 function showEmailForm() {
   const existing = document.getElementById('email-form');
   if (existing) { existing.remove(); return; }
-
   const form = document.createElement('div');
   form.id = 'email-form';
   form.style.cssText = 'margin-top: 16px;';
@@ -602,9 +601,7 @@ function showEmailForm() {
 async function sendMagicLink() {
   const email = document.getElementById('magic-email').value.trim();
   const msg = document.getElementById('magic-msg');
-
   if (!email) return;
-
   const response = await fetch(`${SUPABASE_URL}/auth/v1/magiclink`, {
     method: 'POST',
     headers: {
@@ -613,10 +610,9 @@ async function sendMagicLink() {
     },
     body: JSON.stringify({
       email,
-      options: { emailRedirectTo: window.location.origin + '/feed' }
+      options: { emailRedirectTo: 'https://still-waters-fawn.vercel.app/auth' }
     })
   });
-
   msg.style.display = 'block';
   if (response.ok) {
     msg.style.color = '#4A7A8F';
@@ -627,15 +623,33 @@ async function sendMagicLink() {
   }
 }
 
-// ── CHECK IF ALREADY SIGNED IN ──
-async function checkSession() {
+// ── HANDLE CALLBACK — save session from URL hash ──
+async function handleAuthCallback() {
   const hash = window.location.hash;
-  if (hash && hash.includes('access_token')) {
-    window.location.href = '/feed';
-  }
+  if (!hash) return false;
+
+  const params = new URLSearchParams(hash.substring(1));
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+
+  if (!accessToken) return false;
+
+  // Save session to localStorage in Supabase format
+  const sessionKey = `sb-olhpiqxxofcwlkpvimug-auth-token`;
+  const session = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    token_type: 'bearer',
+  };
+  localStorage.setItem(sessionKey, JSON.stringify(session));
+
+  // Clear the hash and redirect to feed
+  window.location.replace('/feed');
+  return true;
 }
 
-checkSession();
+// ── INIT ──
+handleAuthCallback();
 </script>
 </body>
 </html>
