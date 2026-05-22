@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Still Waters</title>
 <meta name="description" content="Still Waters — a Christian faith community built around prayer, Scripture, and unhurried connection.">
 <meta name="robots" content="noindex, nofollow">
@@ -54,6 +54,13 @@ body {
   background: var(--sand);
   color: var(--deep);
   overflow: hidden;
+}
+
+
+/* ── iOS ZOOM FIX ── */
+/* Prevents iOS from zooming on input focus */
+input, textarea, select {
+  font-size: 16px !important;
 }
 
 @keyframes fadeUp   { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
@@ -1690,13 +1697,79 @@ function getToken() {
   return null;
 }
 
+function getRefreshToken() {
+  const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (sbKey) { try { const s = JSON.parse(localStorage.getItem(sbKey)); if (s?.refresh_token) return s.refresh_token; } catch {} }
+  return null;
+}
+
+function isTokenExpired() {
+  const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (!sbKey) return true;
+  try {
+    const s = JSON.parse(localStorage.getItem(sbKey));
+    if (!s?.expires_at) return false;
+    // Refresh if expires within 5 minutes
+    return (s.expires_at - 300) < Math.floor(Date.now() / 1000);
+  } catch { return false; }
+}
+
+async function refreshSession() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data.access_token) return false;
+    // Save new session
+    const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+      || `sb-${SUPABASE_URL.split('//')[1].split('.')[0]}-auth-token`;
+    localStorage.setItem(sbKey, JSON.stringify({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: data.expires_in,
+      expires_at: Math.floor(Date.now() / 1000) + data.expires_in,
+      token_type: 'bearer'
+    }));
+    return true;
+  } catch { return false; }
+}
+
 // ── AUTH ──
 async function init() {
+  // Try to refresh token if expired or close to expiry
+  if (isTokenExpired()) {
+    const refreshed = await refreshSession();
+    if (!refreshed && !getToken()) {
+      window.location.href = '/auth';
+      return;
+    }
+  }
+
   const token = getToken();
   if (!token) { window.location.href = '/auth'; return; }
+
   const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` } });
-  if (!res.ok) { window.location.href = '/auth'; return; }
-  currentUser = await res.json();
+  if (!res.ok) {
+    // Try one more refresh before giving up
+    const refreshed = await refreshSession();
+    if (!refreshed) { window.location.href = '/auth'; return; }
+    const retryRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${getToken()}` } });
+    if (!retryRes.ok) { window.location.href = '/auth'; return; }
+    currentUser = await retryRes.json();
+  } else {
+    currentUser = await res.json();
+  }
+
+  // Set up background token refresh every 4 minutes
+  setInterval(async () => {
+    if (isTokenExpired()) await refreshSession();
+  }, 4 * 60 * 1000);
 
   // Load profile for avatar etc
   await loadCurrentProfile();
