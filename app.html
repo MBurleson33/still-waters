@@ -1269,7 +1269,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
           ${!isOwnPost ? `<button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','feed')">
             <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
           </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
-          <button class="action-btn">${post.type==='prayer'?'Pray':'Share'}</button>
+          <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
           <button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>
         </div>
         <div class="comment-thread" id="comments-${post.id}">
@@ -1378,6 +1378,7 @@ function renderPrayerFeed() {
     const avatarUrl = p.avatar_url;
     const selahCount = post.selahs ? post.selahs.length : 0;
     const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
+    const isOwnPrayer = post.user_id === currentUser.id;
     const writtenPrayers = post.prayers || [];
     const avatarHtml = avatarUrl ? `<div class="prayer-avatar"><img src="${avatarUrl}" alt="${name}" /></div>` : `<div class="prayer-avatar">${initial}</div>`;
     const badgeHtml = post.answered ? `<div class="answered-badge">✓ Answered</div>` : `<div class="praying-badge"><div class="praying-dot"></div>${selahCount} praying</div>`;
@@ -1408,7 +1409,9 @@ function renderPrayerFeed() {
             <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/></svg>
             ${hasSelahed?'Praying':'Pray'}
           </button>` : ''}
+          ${isOwnPrayer && !post.answered ? `<button class="action-btn" style="color:var(--sage);font-weight:500;" onclick="markAnswered('${post.id}')">✓ Answered</button>` : ''}
           <button class="write-prayer-btn" onclick="toggleWritePrayer('${post.id}')">Write a prayer</button>
+          <button class="action-btn" style="color:var(--stone);font-size:12px;" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
         </div>
         <div class="prayer-response-box" id="prb-${post.id}">
           <div class="prayer-response-label">Pray for ${name.split(' ')[0]}</div>
@@ -1518,7 +1521,8 @@ async function renderProfile() {
   const name = currentProfile?.full_name || currentUser.user_metadata?.full_name || 'Your Name';
   const username = currentProfile?.username || 'username';
   const bio = currentProfile?.bio || '';
-  const avatarUrl = currentProfile?.avatar_url || currentUser.user_metadata?.avatar_url;
+  // Profile row avatar always wins
+  const avatarUrl = currentProfile?.avatar_url || null;
   const initial = name[0].toUpperCase();
 
   const profileAvatar = document.getElementById('profileAvatar');
@@ -2270,6 +2274,74 @@ function renderPersonCard(p) {
         onclick="event.stopPropagation();toggleFollow(this,'${p.id}','${name}')"
       >${isFollowing?'Following':'Follow'}</button>
     </div>`;
+}
+
+// ── MARK PRAYER AS ANSWERED ──
+async function markAnswered(postId) {
+  if (!confirm('Mark this prayer as answered? This will let everyone know God came through.')) return;
+  const token = getToken();
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&user_id=eq.${currentUser.id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json', 'Content-Profile': 'stillwaters',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ answered: true })
+  });
+
+  if (res.ok) {
+    // Update local data and re-render
+    const post = allPrayerPosts.find(p => p.id === postId);
+    if (post) post.answered = true;
+    updatePrayerSummary();
+    renderPrayerFeed();
+    loadSidebarCounts();
+  } else {
+    alert('Something went wrong. Please try again.');
+  }
+}
+
+// ── SHARE POST ──
+async function sharePost(postId, authorName, body) {
+  const url = `${window.location.origin}/feed`;
+  const text = `"${body.substring(0,100)}${body.length > 100 ? '…' : ''}" — ${authorName} on Still Waters`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Still Waters', text, url });
+    } catch (e) {
+      // User cancelled — no action needed
+    }
+  } else {
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('Link copied to clipboard');
+    } catch {
+      showToast('Copy this link: ' + url);
+    }
+  }
+}
+
+// ── TOAST ──
+function showToast(message) {
+  const existing = document.getElementById('toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'toast';
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--deep); color: var(--cream); padding: 10px 20px;
+    border-radius: 20px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(61,50,42,0.2);
+    animation: fadeIn 0.2s ease;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
 }
 
 // ── START ──
