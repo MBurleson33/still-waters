@@ -114,24 +114,80 @@ nav {
   display: none;
 }
 
-/* ── DESKTOP TWO COLUMN ── */
+/* ── DESKTOP TWO COLUMN + SCALING ── */
 @media (min-width: 900px) {
+  body { font-size: 16px; }
+
+  nav { height: 68px; padding: 0 48px; }
+
   .layout {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 32px;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 40px;
     align-items: start;
-    padding: 80px 32px 40px;
+    padding: 88px 48px 48px;
+    max-width: 1380px;
   }
-  .feed-col {
-    min-width: 0;
-  }
+  .feed-col { min-width: 0; }
   .sidebar {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
     position: sticky;
-    top: 72px;
+    top: 80px;
   }
+
+  /* Nav */
+  nav img { height: 36px !important; }
+  .nav-avatar { width: 40px; height: 40px; font-size: 16px; }
+  .nav-icon-btn { width: 40px; height: 40px; }
+
+  /* Scripture card */
+  .scripture-card { padding: 28px 32px; margin-bottom: 24px; }
+  .scripture-card-text { font-size: 22px; }
+  .scripture-card-label { font-size: 11px; }
+
+  /* Compose */
+  .compose { padding: 22px 24px 18px; margin-bottom: 24px; }
+  .compose-avatar { width: 44px; height: 44px; font-size: 18px; }
+  .compose-textarea { font-size: 16px; min-height: 72px; }
+  .type-btn { font-size: 13px; padding: 6px 14px; }
+  .post-btn { padding: 10px 24px; font-size: 14px; }
+
+  /* Feed header */
+  .feed-section { margin-top: 48px; }
+  .feed-title { font-size: 28px; }
+  .feed-meta { font-size: 12px; }
+  .feed-header-rule { width: 40px; height: 3px; }
+  .feed-header { margin-bottom: 20px; }
+
+  /* Post cards */
+  .feed { gap: 16px; }
+  .post-card { padding: 24px 28px 20px; border-radius: 20px; }
+  .post-avatar { width: 44px; height: 44px; font-size: 18px; }
+  .post-author { font-size: 15px; }
+  .post-time { font-size: 12px; }
+  .post-type-tag { font-size: 11px; padding: 4px 12px; }
+  .post-body { font-size: 16px; line-height: 1.8; margin-bottom: 16px; }
+  .post-scripture-text { font-size: 17px; }
+  .post-scripture-ref { font-size: 12px; }
+  .selah-btn { font-size: 15px; padding: 6px 18px; }
+  .selah-count { font-size: 13px; }
+  .action-btn { font-size: 14px; }
+  .post-actions { gap: 14px; padding-top: 14px; }
+
+  /* Sidebar cards */
+  .sidebar-card { padding: 22px 24px; border-radius: 18px; }
+  .sidebar-card-label { font-size: 11px; margin-bottom: 16px; }
+  .sidebar-scripture { padding: 24px; border-radius: 18px; }
+  .sidebar-scripture-text { font-size: 17px; line-height: 1.6; }
+  .sidebar-scripture-ref { font-size: 12px; }
+  .sidebar-nav-item { font-size: 15px; padding: 12px 14px; }
+  .sidebar-nav-item svg { width: 20px; height: 20px; }
+  .sidebar-prayer-label { font-size: 14px; }
+  .sidebar-prayer-value { font-size: 22px; }
+
+  /* Feed loading */
+  .feed-loading { font-size: 15px; padding: 64px 0; }
 }
 
 /* ── SIDEBAR CARDS ── */
