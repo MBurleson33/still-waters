@@ -6,6 +6,8 @@
     { "source": "/profile", "destination": "/app.html" },
     { "source": "/search", "destination": "/app.html" },
     { "source": "/auth", "destination": "/auth.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/", "destination": "/index.html" }
   ]
 }
