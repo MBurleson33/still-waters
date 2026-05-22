@@ -505,6 +505,53 @@ body {
 .posts-title em { font-style:italic; color:var(--water-dk); }
 
 /* ══════════════════════════════════════
+   SEARCH VIEW
+══════════════════════════════════════ */
+.search-bar-wrap {
+  position: relative; margin-bottom: 20px;
+}
+.search-bar {
+  width: 100%; padding: 12px 16px 12px 44px;
+  border: 1.5px solid var(--linen); border-radius: 24px;
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  color: var(--deep); background: var(--white);
+  outline: none; transition: border-color 0.2s;
+  box-shadow: 0 1px 3px rgba(61,50,42,0.04);
+}
+.search-bar:focus { border-color: var(--water); }
+.search-bar::placeholder { color: var(--stone); }
+.search-icon {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--clay); pointer-events: none;
+}
+.search-icon svg { width: 18px; height: 18px; }
+
+.search-section-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--clay);
+  margin-bottom: 12px; padding: 0 2px;
+}
+.person-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--white); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(61,50,42,0.04);
+  transition: box-shadow 0.2s; cursor: pointer;
+}
+.person-card:hover { box-shadow: 0 2px 12px rgba(61,50,42,0.08); }
+.person-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--water-lt); display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--water-dk);
+  flex-shrink: 0; overflow: hidden;
+}
+.person-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.person-name { font-size: 15px; font-weight: 500; color: var(--deep); }
+.person-handle { font-size: 12px; color: var(--clay); margin-top: 1px; }
+.person-bio { font-size: 13px; color: var(--bark); margin-top: 3px; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+
+/* ══════════════════════════════════════
    EDIT PROFILE MODAL
 ══════════════════════════════════════ */
 .edit-overlay { display:none; position:fixed; inset:0; background:rgba(61,50,42,0.5); z-index:300; align-items:center; justify-content:center; padding:24px; }
@@ -711,6 +758,10 @@ body {
         <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
         Feed
       </button>
+      <button class="sb-nav-item" id="nav-search" onclick="navigate('search')">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        Search
+      </button>
       <button class="sb-nav-item" id="nav-prayer" onclick="navigate('prayer')">
         <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 2C11 2 5 8 5 12.5C5 15.985 7.686 18.8 11 18.8C14.314 18.8 17 15.985 17 12.5C17 8 11 2 11 2Z"/></svg>
         Prayer
@@ -819,6 +870,37 @@ body {
 
     </div>
 
+    <!-- ── SEARCH VIEW ── -->
+    <div class="view" id="view-search">
+
+      <div style="margin-bottom:20px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--deep);margin-bottom:4px;">Find <em style="font-style:italic;color:var(--water-dk);">people</em></div>
+        <div style="font-size:13px;color:var(--clay);">Search by name or username</div>
+      </div>
+
+      <div class="search-bar-wrap">
+        <div class="search-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        </div>
+        <input
+          class="search-bar"
+          id="searchInput"
+          type="text"
+          placeholder="Search people…"
+          oninput="handleSearch(this.value)"
+          autocomplete="off"
+        />
+      </div>
+
+      <div id="searchResults">
+        <div class="search-section-label">Suggested — people to follow</div>
+        <div id="suggestedList">
+          <div class="loading"><div class="spinner"></div>Loading…</div>
+        </div>
+      </div>
+
+    </div>
+
     <!-- ── PROFILE VIEW ── -->
     <div class="view" id="view-profile">
 
@@ -890,6 +972,10 @@ body {
   <button class="bnav-btn active" id="bnav-feed" onclick="navigate('feed')">
     <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
     <span class="bnav-label">Feed</span>
+  </button>
+  <button class="bnav-btn" id="bnav-search" onclick="navigate('search')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    <span class="bnav-label">Search</span>
   </button>
   <button class="bnav-btn" id="bnav-prayer" onclick="navigate('prayer')">
     <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 2C11 2 5 8 5 12.5C5 15.985 7.686 18.8 11 18.8C14.314 18.8 17 15.985 17 12.5C17 8 11 2 11 2Z"/></svg>
@@ -989,6 +1075,9 @@ async function init() {
   // Load notification badge
   loadNotifications();
 
+  // Load scripture of the day
+  loadScripture();
+
   // Register service worker
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 }
@@ -1009,18 +1098,18 @@ function updateUserUI() {
   if (!currentUser) return;
   const name = currentProfile?.full_name || currentUser.user_metadata?.full_name || 'U';
   const username = currentProfile?.username || '';
-  const avatarUrl = currentProfile?.avatar_url || currentUser.user_metadata?.avatar_url;
+  // Profile row avatar always wins over Google's
+  const avatarUrl = currentProfile?.avatar_url || null;
   const initial = name[0].toUpperCase();
 
-  // Nav avatar
-  const navAvatar = document.getElementById('navAvatar');
-  if (avatarUrl) { navAvatar.innerHTML = `<img src="${avatarUrl}" alt="${name}" />`; }
-  else { navAvatar.textContent = initial; }
+  const setAvatar = (el, url, name, initial) => {
+    if (!el) return;
+    if (url) { el.innerHTML = `<img src="${url}?t=${Date.now()}" alt="${name}" />`; }
+    else { el.textContent = initial; }
+  };
 
-  // Compose avatar
-  const composeAvatar = document.getElementById('composeAvatar');
-  if (avatarUrl) { composeAvatar.innerHTML = `<img src="${avatarUrl}" alt="${name}" />`; }
-  else { composeAvatar.textContent = initial; }
+  setAvatar(document.getElementById('navAvatar'), avatarUrl, name, initial);
+  setAvatar(document.getElementById('composeAvatar'), avatarUrl, name, initial);
 
   // Dropdown
   document.getElementById('dropdownName').textContent = name;
@@ -1052,13 +1141,14 @@ function navigate(view, skipPush) {
   if (!skipPush) history.pushState({ view }, '', '/' + view);
 
   // Update title
-  const titles = { feed: 'Still Waters — Feed', prayer: 'Still Waters — Prayer', profile: 'Still Waters — Profile' };
+  const titles = { feed: 'Still Waters — Feed', prayer: 'Still Waters — Prayer', profile: 'Still Waters — Profile', search: 'Still Waters — Search' };
   document.title = titles[view] || 'Still Waters';
 
   // Load data if needed
   if (view === 'feed' && !feedLoaded) { loadFeed(); feedLoaded = true; }
   if (view === 'prayer' && !prayerLoaded) { loadPrayer(); prayerLoaded = true; }
   if (view === 'profile' && !profileLoaded) { renderProfile(); profileLoaded = true; }
+  if (view === 'search') { loadSuggested(); document.getElementById('searchInput')?.focus(); }
 }
 
 // Handle browser back/forward
@@ -1509,27 +1599,89 @@ async function deletePost(postId, btn) {
 async function uploadAvatar(input) {
   const file = input.files[0];
   if (!file) return;
+
+  // ── VALIDATION ──
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Please upload a JPG, PNG, WebP, or GIF image.');
+    input.value = '';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Image must be under 5MB.');
+    input.value = '';
+    return;
+  }
+
+  // Check image dimensions
+  const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
+  img.src = objectUrl;
+  await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+  URL.revokeObjectURL(objectUrl);
+
+  if (img.width < 50 || img.height < 50) {
+    alert('Image is too small. Please use a photo at least 50x50 pixels.');
+    input.value = '';
+    return;
+  }
+
   const token = getToken();
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = `<img src="${e.target.result}" alt="avatar" />`;
-    document.getElementById('profileAvatar').innerHTML = img;
-    document.getElementById('navAvatar').innerHTML = img;
-    document.getElementById('composeAvatar').innerHTML = img;
-  };
-  reader.readAsDataURL(file);
-  const ext = file.type === 'image/png' ? 'png' : 'jpg';
+
+  // Show preview immediately everywhere
+  const previewSrc = URL.createObjectURL(file);
+  const imgHtml = `<img src="${previewSrc}" alt="avatar" />`;
+  document.getElementById('profileAvatar').innerHTML = imgHtml;
+  document.getElementById('navAvatar').innerHTML = imgHtml;
+  document.getElementById('composeAvatar').innerHTML = imgHtml;
+
+  // Upload to Supabase Storage
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/gif' ? 'gif' : 'jpg';
   const fileName = `${currentUser.id}.${ext}`;
+
   const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`, {
-    method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': file.type,
+      'x-upsert': 'true'
+    },
+    body: file
   });
-  if (!uploadRes.ok) return;
-  const avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
+
+  if (!uploadRes.ok) {
+    alert('Upload failed. Please try again.');
+    input.value = '';
+    return;
+  }
+
+  // Force cache bust with timestamp
+  const avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}?t=${Date.now()}`;
+
+  // Save to profile
   await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
-    method: 'PATCH', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Content-Profile': 'stillwaters',
+      'Prefer': 'return=minimal'
+    },
     body: JSON.stringify({ avatar_url: avatarUrl })
   });
+
+  // Update local cache
   if (currentProfile) currentProfile.avatar_url = avatarUrl;
+
+  // Update all avatar displays with the permanent URL
+  const finalHtml = `<img src="${avatarUrl}" alt="avatar" />`;
+  document.getElementById('profileAvatar').innerHTML = finalHtml;
+  document.getElementById('navAvatar').innerHTML = finalHtml;
+  document.getElementById('composeAvatar').innerHTML = finalHtml;
+
+  input.value = '';
 }
 
 // ── EDIT PROFILE ──
@@ -1587,7 +1739,51 @@ async function saveProfile() {
   btn.textContent = 'Save changes'; btn.disabled = false;
 }
 
-// ── AVATAR DROPDOWN ──
+// ── SCRIPTURE OF THE DAY ──
+async function loadScripture() {
+  const today = new Date().toISOString().split('T')[0];
+  const cacheKey = 'sw-scripture-' + today;
+  const cached = localStorage.getItem(cacheKey);
+
+  let verse;
+  if (cached) {
+    verse = JSON.parse(cached);
+  } else {
+    try {
+      const res = await fetch('/api/scripture');
+      if (res.ok) {
+        verse = await res.json();
+        localStorage.setItem(cacheKey, JSON.stringify(verse));
+        // Clear yesterday's cache
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('sw-scripture-') && k !== cacheKey) localStorage.removeItem(k);
+        });
+      }
+    } catch {}
+  }
+
+  if (!verse) return;
+
+  const text = `"${verse.text.trim()}"`;
+  const ref = verse.ref;
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  // Update feed scripture card
+  const feedLabel = document.getElementById('feed-verse-label');
+  const feedText = document.getElementById('feed-verse-text');
+  const feedRef = document.getElementById('feed-verse-ref');
+  if (feedLabel) feedLabel.textContent = `Today's verse · ${ref}`;
+  if (feedText) feedText.textContent = text;
+  if (feedRef) feedRef.textContent = `ESV · ${dateStr}`;
+
+  // Update sidebar
+  const sbLabel = document.getElementById('sb-verse-label');
+  const sbText = document.getElementById('sb-verse-text');
+  const sbRef = document.getElementById('sb-verse-ref');
+  if (sbLabel) sbLabel.textContent = `Today's verse · ${ref}`;
+  if (sbText) sbText.textContent = text;
+  if (sbRef) sbRef.textContent = `ESV · Today`;
+}
 function toggleAvatarDropdown() {
   document.getElementById('avatarDropdown').classList.toggle('open');
 }
@@ -1987,6 +2183,93 @@ async function updateCommentCount(postId) {
     const btn = post.querySelector('.comment-toggle');
     if (btn) btn.textContent = count > 0 ? `Comment · ${count}` : 'Comment';
   }
+}
+
+// ══════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════
+let searchTimeout = null;
+
+async function loadSuggested() {
+  const token = getToken();
+  const list = document.getElementById('suggestedList');
+
+  // Show people you don't follow yet (excluding yourself)
+  const followingList = followingIds.length > 0 ? followingIds.join(',') : null;
+  let url = `${SUPABASE_URL}/rest/v1/profiles?id=neq.${currentUser.id}&select=id,full_name,username,avatar_url,bio&limit=20&order=created_at.desc`;
+  if (followingList) url += `&id=not.in.(${followingList})`;
+
+  const res = await fetch(url, {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+  });
+
+  if (!res.ok) { list.innerHTML = ''; return; }
+  const people = await res.json();
+
+  if (!people.length) {
+    list.innerHTML = `<div class="empty-state" style="font-size:16px;">You're following everyone!<span>Invite friends to join Still Waters.</span></div>`;
+    return;
+  }
+
+  list.innerHTML = people.map(p => renderPersonCard(p)).join('');
+}
+
+function handleSearch(query) {
+  clearTimeout(searchTimeout);
+  const results = document.getElementById('searchResults');
+
+  if (!query.trim()) {
+    results.innerHTML = `<div class="search-section-label">Suggested — people to follow</div><div id="suggestedList"><div class="loading"><div class="spinner"></div>Loading…</div></div>`;
+    loadSuggested();
+    return;
+  }
+
+  results.innerHTML = `<div class="search-section-label">Results</div><div id="searchResultsList"><div class="loading"><div class="spinner"></div>Searching…</div></div>`;
+
+  searchTimeout = setTimeout(() => doSearch(query.trim()), 300);
+}
+
+async function doSearch(query) {
+  const token = getToken();
+  const list = document.getElementById('searchResultsList');
+  if (!list) return;
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?or=(full_name.ilike.*${query}*,username.ilike.*${query}*)&id=neq.${currentUser.id}&select=id,full_name,username,avatar_url,bio&limit=20`,
+    { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
+  );
+
+  if (!res.ok) { list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--clay);font-size:14px;">Search failed. Please try again.</div>`; return; }
+  const people = await res.json();
+
+  if (!people.length) {
+    list.innerHTML = `<div class="empty-state" style="font-size:16px;padding:32px 0;">No one found.<span>Try a different name or username.</span></div>`;
+    return;
+  }
+
+  list.innerHTML = people.map(p => renderPersonCard(p)).join('');
+}
+
+function renderPersonCard(p) {
+  const name = p.full_name || 'Someone';
+  const initial = name[0].toUpperCase();
+  const isFollowing = followingIds.includes(p.id);
+  const avatarHtml = p.avatar_url
+    ? `<div class="person-avatar"><img src="${p.avatar_url}" alt="${name}" /></div>`
+    : `<div class="person-avatar">${initial}</div>`;
+
+  return `
+    <div class="person-card" onclick="viewUserProfile('${p.id}')">
+      ${avatarHtml}
+      <div style="flex:1;min-width:0;">
+        <div class="person-name">${name}</div>
+        ${p.username ? `<div class="person-handle">@${p.username}</div>` : ''}
+        ${p.bio ? `<div class="person-bio">${p.bio}</div>` : ''}
+      </div>
+      <button class="follow-pill ${isFollowing?'following':''}"
+        onclick="event.stopPropagation();toggleFollow(this,'${p.id}','${name}')"
+      >${isFollowing?'Following':'Follow'}</button>
+    </div>`;
 }
 
 // ── START ──
