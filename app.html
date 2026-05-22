@@ -909,36 +909,44 @@ input, textarea, select {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(61,50,42,0.5);
+  background: rgba(61,50,42,0.4);
   z-index: 400;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: center;
-  padding: 0;
 }
 #search-modal-overlay.open { display: flex; }
 #search-modal {
   background: var(--sand);
   width: 100%;
   max-width: 620px;
-  height: 100vh;
+  height: 88vh;
   display: flex;
   flex-direction: column;
-  animation: slideDown 0.25s ease;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 32px rgba(61,50,42,0.15);
+  animation: slideUp 0.28s ease;
   overflow: hidden;
 }
-@keyframes slideDown {
-  from { transform: translateY(-20px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+.search-modal-handle-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+  background: var(--sand);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.search-modal-handle {
+  width: 36px; height: 4px;
+  background: var(--stone);
+  border-radius: 2px;
 }
 .search-modal-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
-  background: var(--white);
-  border-bottom: 1px solid var(--linen);
+  padding: 8px 16px 14px;
+  background: var(--sand);
   flex-shrink: 0;
-  padding-top: max(16px, env(safe-area-inset-top));
 }
 .search-modal-close {
   width: 34px; height: 34px; border-radius: 50%;
@@ -954,8 +962,8 @@ input, textarea, select {
 .search-modal-input {
   width: 100%; padding: 10px 14px 10px 40px;
   border: 1.5px solid var(--linen); border-radius: 20px;
-  font-family: 'DM Sans', sans-serif; font-size: 15px;
-  color: var(--deep); background: var(--cream);
+  font-family: 'DM Sans', sans-serif; font-size: 16px;
+  color: var(--deep); background: var(--white);
   outline: none; transition: border-color 0.2s;
 }
 .search-modal-input:focus { border-color: var(--water); }
@@ -966,18 +974,17 @@ input, textarea, select {
 }
 .search-modal-input-icon svg { width: 16px; height: 16px; }
 .search-modal-body {
-  flex: 1; overflow-y: auto; padding: 20px;
+  flex: 1; overflow-y: auto; padding: 16px 20px 40px;
 }
 
 @media (min-width: 700px) {
+  #search-modal-overlay { align-items: center; padding: 24px; }
   #search-modal {
-    margin-top: 60px;
-    height: auto;
-    max-height: 80vh;
+    height: auto; max-height: 75vh;
     border-radius: 20px;
-    box-shadow: 0 8px 40px rgba(61,50,42,0.2);
   }
-  .search-modal-header { padding-top: 16px; }
+  .search-modal-handle-wrap { display: none; }
+  .search-modal-header { padding: 20px 20px 14px; }
 }
 
 /* ══════════════════════════════════════
@@ -2293,7 +2300,11 @@ async function submitWrittenPrayer(postId) {
       }
     }
     prayerLoaded = false; loadPrayer(); prayerLoaded = true;
-  } else { swAlert('Something went wrong', 'Please try again.'); }
+  } else {
+    const errText = await res.text();
+    console.error('Prayer save failed:', res.status, errText);
+    swAlert('Something went wrong', `Error ${res.status}: ${errText}`);
+  }
   btn.textContent = 'Send prayer'; btn.disabled = false;
 }
 
