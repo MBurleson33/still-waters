@@ -84,33 +84,43 @@ nav {
 
 @media (min-width: 700px) {
   .columns {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 32px;
+    display: block;
     padding: 32px 40px 48px;
+    max-width: calc(100% - 320px);
+    margin: 0;
   }
-  .main-col { flex: 1; min-width: 0; }
+  .main-col { max-width: 680px; margin: 0 auto; }
   .side-col {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    width: 280px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 72px;
+    position: fixed;
+    top: 56px;
+    right: 0;
+    width: 320px;
+    height: calc(100vh - 56px);
+    padding: 28px 32px 40px 20px;
+    overflow-y: auto;
+    background: var(--sand);
+    border-left: 1px solid rgba(200,187,168,0.2);
   }
+  .bottom-nav { display: none; }
+  .page { padding-bottom: 0; }
 }
 
 @media (min-width: 900px) {
   nav { height: 68px; padding: 0 48px; }
   nav img { height: 36px !important; }
-  .side-col { width: 300px; gap: 20px; }
-  .prayer-body { font-size: 16px; }
-  .prayer-author { font-size: 15px; }
-  .selah-btn { font-size: 15px; padding: 6px 18px; }
-  .pray-btn { font-size: 14px; }
-  .comment-btn { font-size: 14px; }
+  .side-col {
+    top: 68px;
+    height: calc(100vh - 68px);
+    width: 340px;
+    padding: 32px 40px 40px 24px;
+  }
+  .columns {
+    max-width: calc(100% - 340px);
+    padding: 40px 48px 48px;
+  }
 }
 
 /* ── PAGE HEADER ── */
