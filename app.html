@@ -4069,8 +4069,33 @@ async function openFollowSheet(type, userId) {
   const title = type === 'followers' ? 'Followers' : 'Following';
   document.getElementById('followSheetTitle').textContent = title;
   document.getElementById('followSheetBody').innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
-  document.getElementById('follow-sheet-overlay').classList.add('open');
+  const overlay = document.getElementById('follow-sheet-overlay');
+  const sheet = document.getElementById('follow-sheet');
+  overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  // Drag to dismiss
+  let startY = 0, currentY = 0, dragging = false;
+  sheet.addEventListener('touchstart', e => {
+    if (!e.target.closest('.follow-sheet-handle-wrap')) return;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    sheet.style.transition = 'none';
+  }, { passive: true });
+  sheet.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const dy = Math.max(0, currentY - startY);
+    sheet.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+  sheet.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    sheet.style.transition = '';
+    if (currentY - startY > 100) { closeFollowSheet(); }
+    else { sheet.style.transform = ''; }
+    startY = 0; currentY = 0;
+  });
 
   const token = getToken();
   const url = type === 'followers'
@@ -4110,6 +4135,9 @@ async function openFollowSheet(type, userId) {
 }
 
 function closeFollowSheet() {
+  const sheet = document.getElementById('follow-sheet');
+  sheet.style.transform = '';
+  sheet.style.transition = '';
   document.getElementById('follow-sheet-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
