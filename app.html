@@ -1464,9 +1464,7 @@ async function renderProfile() {
         <div class="post-body">${post.body}</div>
         ${scriptureBlock}
         <div class="post-actions">
-          <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','profile')">
-            <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
-          </button>
+          <span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>
           <button class="action-btn">${post.type==='prayer'?'Pray':'Share'}</button>
           <button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>
           <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
