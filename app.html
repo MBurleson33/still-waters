@@ -249,6 +249,35 @@ body {
 .view.active { display:block; animation:fadeIn 0.3s ease; }
 
 /* ══════════════════════════════════════
+   PULL TO REFRESH
+══════════════════════════════════════ */
+#ptr-indicator {
+  position: absolute;
+  top: var(--nav-h);
+  left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  background: var(--sand);
+  font-size: 13px;
+  color: var(--clay);
+  font-family: 'DM Sans', sans-serif;
+  transform: translateY(-48px);
+  transition: transform 0.2s ease;
+  z-index: 50;
+  pointer-events: none;
+}
+#ptr-indicator.visible { transform: translateY(0); }
+#ptr-indicator.refreshing .ptr-spinner { animation: spin 0.8s linear infinite; }
+.ptr-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--linen);
+  border-top-color: var(--water);
+}
+
+/* ══════════════════════════════════════
    SHARED COMPONENTS
 ══════════════════════════════════════ */
 .loading { display:flex; align-items:center; justify-content:center; padding:48px 0; gap:10px; font-size:14px; color:var(--clay); }
@@ -1082,6 +1111,12 @@ body {
   </div>
 </div>
 
+<!-- PULL TO REFRESH -->
+<div id="ptr-indicator">
+  <div class="ptr-spinner"></div>
+  <span id="ptr-label">Pull to refresh</span>
+</div>
+
 <!-- APP SHELL -->
 <div id="shell">
 
@@ -1541,6 +1576,9 @@ async function init() {
 
   // Load scripture of the day
   loadScripture();
+
+  // Init pull to refresh (mobile only)
+  initPullToRefresh();
 
   // Register service worker
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
@@ -3218,6 +3256,74 @@ async function saveEditPost() {
   }
 
   btn.textContent = 'Save changes'; btn.disabled = false;
+}
+
+// ══════════════════════════════════════
+// PULL TO REFRESH
+// ══════════════════════════════════════
+function initPullToRefresh() {
+  // Only on mobile / touch devices
+  if (window.matchMedia('(min-width: 700px)').matches) return;
+
+  const content = document.getElementById('content');
+  const indicator = document.getElementById('ptr-indicator');
+  const label = document.getElementById('ptr-label');
+
+  let startY = 0;
+  let currentY = 0;
+  let pulling = false;
+  let refreshing = false;
+  const THRESHOLD = 70;
+
+  content.addEventListener('touchstart', e => {
+    if (content.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  }, { passive: true });
+
+  content.addEventListener('touchmove', e => {
+    if (!pulling || refreshing) return;
+    currentY = e.touches[0].clientY;
+    const dist = Math.min(currentY - startY, THRESHOLD * 1.5);
+    if (dist <= 0) return;
+
+    indicator.classList.add('visible');
+    label.textContent = dist >= THRESHOLD ? 'Release to refresh' : 'Pull to refresh';
+
+    // Slightly drag the content down for feel
+    const drag = Math.min(dist * 0.4, 30);
+    content.style.transform = `translateY(${drag}px)`;
+  }, { passive: true });
+
+  content.addEventListener('touchend', async () => {
+    if (!pulling) return;
+    pulling = false;
+    const dist = currentY - startY;
+    content.style.transform = '';
+
+    if (dist >= THRESHOLD && !refreshing) {
+      refreshing = true;
+      indicator.classList.add('refreshing');
+      label.textContent = 'Refreshing…';
+
+      // Refresh the current view
+      try {
+        if (currentView === 'feed') { feedLoaded = false; await loadFeed(); feedLoaded = true; }
+        else if (currentView === 'prayer') { prayerLoaded = false; await loadPrayer(); prayerLoaded = true; }
+        else if (currentView === 'profile') { profileLoaded = false; await renderProfile(); profileLoaded = true; }
+        else if (currentView === 'search') { await loadSuggested(); }
+        await loadSidebarCounts();
+        await loadNotifications();
+      } catch {}
+
+      refreshing = false;
+    }
+
+    // Hide indicator
+    indicator.classList.remove('visible', 'refreshing');
+    label.textContent = 'Pull to refresh';
+    startY = 0; currentY = 0;
+  }, { passive: true });
 }
 
 // ── START ──
