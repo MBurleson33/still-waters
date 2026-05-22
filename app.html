@@ -610,6 +610,51 @@ body {
 .ob-loading { padding: 32px 0; color: var(--clay); font-size: 14px; display: flex; align-items: center; gap: 10px; justify-content: center; }
 
 /* ══════════════════════════════════════
+   PROFILE THREE COLUMN (desktop)
+══════════════════════════════════════ */
+.profile-3col {
+  display: flex;
+  flex-direction: column-reverse; /* mobile: posts first visually is weird, so info first */
+  gap: 16px;
+}
+
+/* Mobile: info on top, posts below */
+.profile-info-col { width: 100%; }
+.profile-posts-col { width: 100%; }
+
+@media (min-width: 900px) {
+  /* Override the view max-width for profile to be wider */
+  #view-profile {
+    max-width: 100%;
+    padding: 36px 40px 48px;
+  }
+
+  .profile-3col {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .profile-posts-col {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .profile-info-col {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: calc(var(--nav-h) + 16px);
+    max-height: calc(100vh - var(--nav-h) - 48px);
+    overflow-y: auto;
+  }
+
+  /* Hide scrollbar on info col but keep scroll */
+  .profile-info-col::-webkit-scrollbar { display: none; }
+  .profile-info-col { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ══════════════════════════════════════
    POST DETAIL MODAL
 ══════════════════════════════════════ */
 .post-detail-overlay {
@@ -1204,63 +1249,75 @@ body {
     <!-- ── PROFILE VIEW ── -->
     <div class="view" id="view-profile">
 
-      <div class="profile-header-card">
-        <div class="profile-cover">
-          <div class="cover-verse">"Be still, and know." — Psalm 46:10</div>
+      <!-- Mobile: stacked. Desktop: overridden by profile-3col CSS -->
+      <div class="profile-3col">
+
+        <!-- CENTER: Posts -->
+        <div class="profile-posts-col">
+          <div class="posts-header">
+            <div class="posts-rule"></div>
+            <div class="posts-title">My <em>posts</em></div>
+          </div>
+          <div id="myPosts">
+            <div class="loading"><div class="spinner"></div>Loading…</div>
+          </div>
         </div>
-        <div class="profile-identity">
-          <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()" title="Change photo">
-            <div class="profile-streak-ring"></div>
-            <div class="profile-avatar-img" id="profileAvatar">M</div>
-            <div class="avatar-edit-badge">
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 7.5L3.5 5 7 1.5a1 1 0 011.5 1.5L5 6.5 2.5 9H1V7.5z" fill="white"/></svg>
+
+        <!-- RIGHT: Profile info (sticky) -->
+        <div class="profile-info-col">
+
+          <div class="profile-header-card">
+            <div class="profile-cover">
+              <div class="cover-verse">"Be still, and know." — Psalm 46:10</div>
+            </div>
+            <div class="profile-identity">
+              <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+                <div class="profile-streak-ring"></div>
+                <div class="profile-avatar-img" id="profileAvatar">M</div>
+                <div class="avatar-edit-badge">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 7.5L3.5 5 7 1.5a1 1 0 011.5 1.5L5 6.5 2.5 9H1V7.5z" fill="white"/></svg>
+                </div>
+              </div>
+              <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)" />
+              <button class="profile-edit-btn" onclick="openEditModal()">
+                <svg width="11" height="11" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 10L9.5 2.5a1.5 1.5 0 012 2L6 11H2v-1z"/></svg>
+                Edit profile
+              </button>
+              <div class="profile-name" id="profileName">Loading…</div>
+              <div class="profile-handle" id="profileHandle">@…</div>
+              <div class="profile-bio" id="profileBio"></div>
+              <div class="profile-stats">
+                <div class="stat-item"><div class="stat-value" id="statPosts">—</div><div class="stat-label">Posts</div></div>
+                <div class="stat-item"><div class="stat-value" id="statFollowers">—</div><div class="stat-label">Followers</div></div>
+                <div class="stat-item"><div class="stat-value" id="statFollowing">—</div><div class="stat-label">Following</div></div>
+                <div class="stat-item"><div class="stat-value water" id="statSelahs">—</div><div class="stat-label">Selahs given</div></div>
+              </div>
             </div>
           </div>
-          <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)" />
-          <button class="profile-edit-btn" onclick="openEditModal()">
-            <svg width="11" height="11" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 10L9.5 2.5a1.5 1.5 0 012 2L6 11H2v-1z"/></svg>
-            Edit profile
-          </button>
-          <div class="profile-name" id="profileName">Loading…</div>
-          <div class="profile-handle" id="profileHandle">@…</div>
-          <div class="profile-bio" id="profileBio"></div>
-          <div class="profile-stats">
-            <div class="stat-item"><div class="stat-value" id="statPosts">—</div><div class="stat-label">Posts</div></div>
-            <div class="stat-item"><div class="stat-value" id="statFollowers">—</div><div class="stat-label">Followers</div></div>
-            <div class="stat-item"><div class="stat-value" id="statFollowing">—</div><div class="stat-label">Following</div></div>
-            <div class="stat-item"><div class="stat-value water" id="statSelahs">—</div><div class="stat-label">Selahs given</div></div>
-          </div>
-        </div>
-      </div>
 
-      <div class="faith-card">
-        <div class="faith-card-header">
-          <div class="faith-card-title">Faith <em>profile</em></div>
-          <button class="faith-edit-btn" onclick="openEditModal()">Edit</button>
-        </div>
-        <div class="faith-fields">
-          <div class="faith-field">
-            <div class="faith-icon icon-sage"><svg viewBox="0 0 15 15" fill="none" stroke="#5a7a55" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="1.5" width="8" height="11" rx="1"/><path d="M2 5.5h8M4.5 1.5v4"/></svg></div>
-            <div><div class="faith-field-label">Currently reading</div><div class="faith-field-value" id="currentlyReading">—</div></div>
+          <div class="faith-card">
+            <div class="faith-card-header">
+              <div class="faith-card-title">Faith <em>profile</em></div>
+              <button class="faith-edit-btn" onclick="openEditModal()">Edit</button>
+            </div>
+            <div class="faith-fields">
+              <div class="faith-field">
+                <div class="faith-icon icon-sage"><svg viewBox="0 0 15 15" fill="none" stroke="#5a7a55" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="1.5" width="8" height="11" rx="1"/><path d="M2 5.5h8M4.5 1.5v4"/></svg></div>
+                <div><div class="faith-field-label">Currently reading</div><div class="faith-field-value" id="currentlyReading">—</div></div>
+              </div>
+              <div class="faith-field">
+                <div class="faith-icon icon-linen"><svg viewBox="0 0 15 15" fill="none" stroke="#6B5D4F" stroke-width="1.5" stroke-linecap="round"><path d="M7.5 12C7.5 12 2.5 8.5 2.5 5.5C2.5 3.5 4 2 5.8 2C6.6 2 7.2 2.3 7.5 2.7C7.8 2.3 8.4 2 9.2 2C11 2 12.5 3.5 12.5 5.5C12.5 8.5 7.5 12 7.5 12Z" transform="scale(0.9) translate(0.5,0.5)"/></svg></div>
+                <div><div class="faith-field-label">Testimony</div><div class="faith-field-value" id="testimony">—</div></div>
+              </div>
+              <div class="faith-field">
+                <div class="faith-icon icon-water"><svg viewBox="0 0 15 15" fill="none" stroke="#4A7A8F" stroke-width="1.5" stroke-linecap="round"><circle cx="7.5" cy="5" r="3"/><path d="M2 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg></div>
+                <div><div class="faith-field-label">Spiritual gifts</div><div class="faith-field-value" id="spiritualGifts">—</div></div>
+              </div>
+            </div>
           </div>
-          <div class="faith-field">
-            <div class="faith-icon icon-linen"><svg viewBox="0 0 15 15" fill="none" stroke="#6B5D4F" stroke-width="1.5" stroke-linecap="round"><path d="M7.5 12C7.5 12 2.5 8.5 2.5 5.5C2.5 3.5 4 2 5.8 2C6.6 2 7.2 2.3 7.5 2.7C7.8 2.3 8.4 2 9.2 2C11 2 12.5 3.5 12.5 5.5C12.5 8.5 7.5 12 7.5 12Z" transform="scale(0.9) translate(0.5,0.5)"/></svg></div>
-            <div><div class="faith-field-label">Testimony</div><div class="faith-field-value" id="testimony">—</div></div>
-          </div>
-          <div class="faith-field">
-            <div class="faith-icon icon-water"><svg viewBox="0 0 15 15" fill="none" stroke="#4A7A8F" stroke-width="1.5" stroke-linecap="round"><circle cx="7.5" cy="5" r="3"/><path d="M2 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg></div>
-            <div><div class="faith-field-label">Spiritual gifts</div><div class="faith-field-value" id="spiritualGifts">—</div></div>
-          </div>
-        </div>
-      </div>
 
-      <div class="posts-header">
-        <div class="posts-rule"></div>
-        <div class="posts-title">My <em>posts</em></div>
-      </div>
-      <div id="myPosts">
-        <div class="loading"><div class="spinner"></div>Loading…</div>
-      </div>
+        </div><!-- end profile-info-col -->
+      </div><!-- end profile-3col -->
 
     </div>
 
