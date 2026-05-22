@@ -1580,6 +1580,9 @@ async function init() {
   // Init pull to refresh (mobile only)
   initPullToRefresh();
 
+  // Init push notifications
+  initPushNotifications();
+
   // Register service worker
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 }
@@ -1970,7 +1973,14 @@ async function submitWrittenPrayer(postId) {
     const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     });
-    if (postRes.ok) { const posts = await postRes.json(); if (posts[0]) createNotification(posts[0].user_id, 'prayer', postId); }
+    if (postRes.ok) { 
+      const posts = await postRes.json(); 
+      if (posts[0]) {
+        createNotification(posts[0].user_id, 'prayer', postId);
+        const actorName = currentProfile?.full_name || 'Someone';
+        sendPushNotification(posts[0].user_id, '🙏 Prayer', `${actorName} wrote a prayer for you`, '/prayer', 'prayer');
+      }
+    }
     prayerLoaded = false; loadPrayer(); prayerLoaded = true;
   } else { alert('Something went wrong.'); }
   btn.textContent = 'Send prayer'; btn.disabled = false;
@@ -1997,12 +2007,16 @@ async function toggleSelah(btn, postId, context) {
       body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
     });
     // Notify post owner
-    const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
+    const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id,body`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     });
     if (postRes.ok) {
       const posts = await postRes.json();
-      if (posts[0]) createNotification(posts[0].user_id, 'selah', postId);
+      if (posts[0]) {
+        createNotification(posts[0].user_id, 'selah', postId);
+        const actorName = currentProfile?.full_name || 'Someone';
+        sendPushNotification(posts[0].user_id, '✦ Selah', `${actorName} Selah'd your post`, '/feed', 'selah');
+      }
     }
   }
 
@@ -2373,6 +2387,8 @@ async function obToggleFollow(userId, btn) {
       body: JSON.stringify({ follower_id: currentUser.id, following_id: userId })
     });
     createNotification(userId, 'follow');
+    const actorName = currentProfile?.full_name || 'Someone';
+    sendPushNotification(userId, 'New follower', `${actorName} started following you`, '/feed', 'follow');
   }
 }
 
@@ -2477,6 +2493,8 @@ async function toggleFollow(btn, userId, name) {
       body: JSON.stringify({ follower_id: currentUser.id, following_id: userId })
     });
     createNotification(userId, 'follow');
+    const actorName = currentProfile?.full_name || 'Someone';
+    sendPushNotification(userId, 'New follower', `${actorName} started following you`, '/feed', 'follow');
     // Reload feed now that we follow someone new
     feedLoaded = false;
     loadFeed();
@@ -2856,7 +2874,11 @@ async function submitComment(postId) {
     });
     if (postRes.ok) {
       const posts = await postRes.json();
-      if (posts[0]) createNotification(posts[0].user_id, 'comment', postId);
+      if (posts[0]) {
+        createNotification(posts[0].user_id, 'comment', postId);
+        const actorName = currentProfile?.full_name || 'Someone';
+        sendPushNotification(posts[0].user_id, 'New comment', `${actorName} commented on your post`, '/feed', 'comment');
+      }
     }
   }
 }
@@ -3160,7 +3182,14 @@ async function submitDetailComment() {
     const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${detailPostId}&select=user_id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     });
-    if (postRes.ok) { const posts = await postRes.json(); if (posts[0]) createNotification(posts[0].user_id, 'comment', detailPostId); }
+    if (postRes.ok) { 
+      const posts = await postRes.json(); 
+      if (posts[0]) {
+        createNotification(posts[0].user_id, 'comment', detailPostId);
+        const actorName = currentProfile?.full_name || 'Someone';
+        sendPushNotification(posts[0].user_id, 'New comment', `${actorName} commented on your post`, '/feed', 'comment');
+      }
+    }
     openPostDetail(detailPostId); // Reload to show new comment
     updateCommentCount(detailPostId);
   }
@@ -3324,6 +3353,175 @@ function initPullToRefresh() {
     label.textContent = 'Pull to refresh';
     startY = 0; currentY = 0;
   }, { passive: true });
+}
+
+// ══════════════════════════════════════
+// PUSH NOTIFICATIONS
+// ══════════════════════════════════════
+const VAPID_PUBLIC_KEY = 'BAbjQadpVyawjEGndQf_T_YTLB68yDUjeZnSPaAUZV7jKgP6B_rDcYo-r4viX55Nan7RJKEy7kLkNk62Wk62q30';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  // Listen for navigate messages from service worker
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'navigate') navigate(e.data.url.replace('/', ''), true);
+  });
+
+  // Check if already subscribed
+  const reg = await navigator.serviceWorker.ready;
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) return; // Already subscribed — no prompt needed
+
+  // Show prompt after a short delay if permission not yet decided
+  if (Notification.permission === 'default') {
+    setTimeout(showPushPrompt, 8000); // Wait 8s before asking
+  } else if (Notification.permission === 'granted') {
+    await subscribeToPush(); // Already granted, subscribe silently
+  }
+}
+
+async function subscribeToPush() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+
+    const token = getToken();
+    const subJson = sub.toJSON();
+
+    await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json', 'Content-Profile': 'stillwaters',
+        'Prefer': 'return=minimal,resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth
+      })
+    });
+    return true;
+  } catch (err) {
+    console.log('Push subscription failed:', err);
+    return false;
+  }
+}
+
+function showPushPrompt() {
+  // Don't show if already decided
+  if (Notification.permission !== 'default') return;
+
+  const prompt = document.createElement('div');
+  prompt.id = 'push-prompt';
+  prompt.style.cssText = `
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--deep); color: var(--cream); border-radius: 16px;
+    padding: 16px 20px; max-width: 320px; width: calc(100% - 40px);
+    box-shadow: 0 4px 24px rgba(61,50,42,0.25); z-index: 999;
+    font-family: 'DM Sans', sans-serif; animation: fadeUp 0.3s ease;
+  `;
+  prompt.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="font-size:22px;flex-shrink:0;">🔔</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:500;margin-bottom:4px;">Stay connected</div>
+        <div style="font-size:13px;color:var(--stone);line-height:1.5;">Get notified when someone Selahs your post or prays for you.</div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button onclick="handlePushAllow()" style="flex:1;padding:8px;background:var(--water-dk);border:none;border-radius:20px;color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">Allow</button>
+          <button onclick="handlePushDismiss()" style="padding:8px 16px;background:none;border:1px solid rgba(255,255,255,0.2);border-radius:20px;color:var(--stone);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Not now</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(prompt);
+}
+
+async function handlePushAllow() {
+  document.getElementById('push-prompt')?.remove();
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') await subscribeToPush();
+}
+
+function handlePushDismiss() {
+  document.getElementById('push-prompt')?.remove();
+}
+
+async function sendPushNotification(userId, title, body, url, tag) {
+  if (!userId || userId === currentUser.id) return;
+  const token = getToken();
+  try {
+    await fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, title, body, url, tag })
+    });
+  } catch {}
+}
+
+// ══════════════════════════════════════
+// PWA INSTALL PROMPT
+// ══════════════════════════════════════
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+
+  // Show install banner after 30s if not already installed
+  setTimeout(() => {
+    if (deferredInstallPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+      showInstallPrompt();
+    }
+  }, 30000);
+});
+
+function showInstallPrompt() {
+  if (document.getElementById('install-prompt')) return;
+  const prompt = document.createElement('div');
+  prompt.id = 'install-prompt';
+  prompt.style.cssText = `
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--white); border-radius: 16px;
+    padding: 16px 20px; max-width: 320px; width: calc(100% - 40px);
+    box-shadow: 0 4px 24px rgba(61,50,42,0.15); z-index: 999;
+    font-family: 'DM Sans', sans-serif; animation: fadeUp 0.3s ease;
+    border: 1px solid var(--linen);
+  `;
+  prompt.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <img src="/icons/PWA-Icon-192.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;" />
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:500;color:var(--deep);margin-bottom:2px;">Add to Home Screen</div>
+        <div style="font-size:13px;color:var(--clay);line-height:1.5;">Install Still Waters for the best experience.</div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button onclick="handleInstallAccept()" style="flex:1;padding:8px;background:var(--water-dk);border:none;border-radius:20px;color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;">Install</button>
+          <button onclick="document.getElementById('install-prompt')?.remove()" style="padding:8px 16px;background:none;border:1px solid var(--linen);border-radius:20px;color:var(--clay);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Not now</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(prompt);
+}
+
+async function handleInstallAccept() {
+  document.getElementById('install-prompt')?.remove();
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
 }
 
 // ── START ──
