@@ -4,6 +4,7 @@
     { "source": "/feed", "destination": "/app.html" },
     { "source": "/prayer", "destination": "/app.html" },
     { "source": "/profile", "destination": "/app.html" },
+    { "source": "/search", "destination": "/app.html" },
     { "source": "/auth", "destination": "/auth.html" },
     { "source": "/", "destination": "/index.html" }
   ]
