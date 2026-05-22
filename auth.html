@@ -660,32 +660,106 @@ async function sendMagicLink() {
 }
 
 // ── HANDLE CALLBACK — save session from URL hash ──
-function handleAuthCallback() {
+async function handleAuthCallback() {
   const hash = window.location.hash;
-  if (!hash) return;
+  const query = new URLSearchParams(window.location.search);
 
-  const params = new URLSearchParams(hash.substring(1));
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-  const expiresIn = params.get('expires_in');
-  const expiresAt = params.get('expires_at');
-  const tokenType = params.get('token_type');
+  // ── CASE 1: Google OAuth — access_token in hash ──
+  if (hash) {
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const expiresIn = params.get('expires_in');
+    const expiresAt = params.get('expires_at');
+    const tokenType = params.get('token_type');
 
-  if (!accessToken) return;
+    if (accessToken) {
+      const sessionKey = `sb-olhpiqxxofcwlkpvimug-auth-token`;
+      const session = {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_in: parseInt(expiresIn) || 3600,
+        expires_at: parseInt(expiresAt) || Math.floor(Date.now() / 1000) + 3600,
+        token_type: tokenType || 'bearer',
+      };
+      localStorage.setItem(sessionKey, JSON.stringify(session));
+      window.location.replace('/feed');
+      return;
+    }
+  }
 
-  // Save session in Supabase format
-  const sessionKey = `sb-olhpiqxxofcwlkpvimug-auth-token`;
-  const session = {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-    expires_in: parseInt(expiresIn) || 3600,
-    expires_at: parseInt(expiresAt) || Math.floor(Date.now() / 1000) + 3600,
-    token_type: tokenType || 'bearer',
-  };
-  localStorage.setItem(sessionKey, JSON.stringify(session));
+  // ── CASE 2: Magic link — token_hash in query params ──
+  const tokenHash = query.get('token_hash') || (hash && new URLSearchParams(hash.substring(1)).get('token_hash'));
+  const type = query.get('type') || (hash && new URLSearchParams(hash.substring(1)).get('type'));
 
-  // Go to feed
-  window.location.replace('/feed');
+  if (tokenHash && type) {
+    try {
+      const res = await fetch(`https://olhpiqxxofcwlkpvimug.supabase.co/auth/v1/verify`, {
+        method: 'POST',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token_hash: tokenHash, type })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          const sessionKey = `sb-olhpiqxxofcwlkpvimug-auth-token`;
+          localStorage.setItem(sessionKey, JSON.stringify({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+            expires_in: data.expires_in || 3600,
+            expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+            token_type: 'bearer'
+          }));
+          window.location.replace('/feed');
+          return;
+        }
+      }
+
+      // If verify failed, show error
+      document.querySelector('.auth-sub').textContent = 'This link has expired or is invalid. Please request a new one.';
+      document.querySelector('.auth-sub').style.color = '#c0392b';
+    } catch (err) {
+      console.error('Magic link error:', err);
+    }
+    return;
+  }
+
+  // ── CASE 3: Older Supabase magic link format — token in hash ──
+  if (hash) {
+    const params = new URLSearchParams(hash.substring(1));
+    const token = params.get('token');
+    const type2 = params.get('type');
+    if (token && type2 === 'magiclink') {
+      try {
+        const res = await fetch(`https://olhpiqxxofcwlkpvimug.supabase.co/auth/v1/verify`, {
+          method: 'POST',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ token, type: type2 })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.access_token) {
+            const sessionKey = `sb-olhpiqxxofcwlkpvimug-auth-token`;
+            localStorage.setItem(sessionKey, JSON.stringify({
+              access_token: data.access_token,
+              refresh_token: data.refresh_token,
+              expires_in: data.expires_in || 3600,
+              expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+              token_type: 'bearer'
+            }));
+            window.location.replace('/feed');
+          }
+        }
+      } catch {}
+    }
+  }
 }
 
 handleAuthCallback();
