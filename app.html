@@ -1152,9 +1152,14 @@ body {
     <!-- ── SEARCH VIEW ── -->
     <div class="view" id="view-search">
 
-      <div style="margin-bottom:20px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--deep);margin-bottom:4px;">Find <em style="font-style:italic;color:var(--water-dk);">people</em></div>
-        <div style="font-size:13px;color:var(--clay);">Search by name or username</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <button onclick="navigate('feed')" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--linen);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--bark);flex-shrink:0;transition:background 0.2s;" onmouseover="this.style.background='var(--stone)'" onmouseout="this.style.background='var(--linen)'">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13L5 8l5-5"/></svg>
+        </button>
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--deep);line-height:1.1;">Find <em style="font-style:italic;color:var(--water-dk);">people</em></div>
+          <div style="font-size:13px;color:var(--clay);">Search by name or username</div>
+        </div>
       </div>
 
       <div class="search-bar-wrap">
@@ -2118,6 +2123,98 @@ async function loadScripture() {
   if (sbText) sbText.textContent = text;
   if (sbRef) sbRef.textContent = `ESV · Today`;
 }
+
+// ══════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════
+function showOnboarding() {
+  document.getElementById('onboarding').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function obNextStep() {
+  document.getElementById('ob-step-1').classList.remove('active');
+  document.getElementById('ob-step-2').classList.add('active');
+  loadObPeople();
+}
+
+async function loadObPeople() {
+  const token = getToken();
+  const list = document.getElementById('obPeopleList');
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=neq.${currentUser.id}&select=id,full_name,username,avatar_url,bio&limit=8&order=created_at.asc`,
+    { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
+  );
+
+  if (!res.ok) { list.innerHTML = ''; return; }
+  const people = await res.json();
+
+  if (!people.length) {
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--clay);font-size:15px;font-style:italic;">No one here yet — you're early!<br><span style="font-size:13px;font-style:normal;margin-top:6px;display:block;">Invite friends to join you.</span></div>`;
+    return;
+  }
+
+  list.innerHTML = people.map(p => {
+    const name = p.full_name || 'Someone';
+    const initial = name[0].toUpperCase();
+    const avatarHtml = p.avatar_url
+      ? `<div class="ob-person-avatar"><img src="${p.avatar_url}" alt="${name}" /></div>`
+      : `<div class="ob-person-avatar">${initial}</div>`;
+    return `
+      <div class="ob-person">
+        ${avatarHtml}
+        <div style="flex:1;min-width:0;">
+          <div class="ob-person-name">${name}</div>
+          ${p.username ? `<div class="ob-person-handle">@${p.username}</div>` : ''}
+        </div>
+        <button class="ob-follow-btn" id="obf-${p.id}" onclick="obToggleFollow('${p.id}',this)">Follow</button>
+      </div>`;
+  }).join('');
+}
+
+async function obToggleFollow(userId, btn) {
+  const token = getToken();
+  const isFollowing = followingIds.includes(userId);
+
+  if (isFollowing) {
+    btn.textContent = 'Follow';
+    btn.classList.remove('following');
+    followingIds = followingIds.filter(id => id !== userId);
+    await fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${currentUser.id}&following_id=eq.${userId}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+    });
+  } else {
+    btn.textContent = 'Following';
+    btn.classList.add('following');
+    followingIds.push(userId);
+    await fetch(`${SUPABASE_URL}/rest/v1/follows`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ follower_id: currentUser.id, following_id: userId })
+    });
+    createNotification(userId, 'follow');
+  }
+}
+
+async function completeOnboarding() {
+  const token = getToken();
+  await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json', 'Content-Profile': 'stillwaters',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ onboarded: true })
+  });
+  if (currentProfile) currentProfile.onboarded = true;
+  document.getElementById('onboarding').classList.remove('open');
+  document.body.style.overflow = '';
+  navigate('feed', true);
+}
+
 function toggleAvatarDropdown() {
   document.getElementById('avatarDropdown').classList.toggle('open');
 }
