@@ -505,6 +505,110 @@ body {
 .posts-title em { font-style:italic; color:var(--water-dk); }
 
 /* ══════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════ */
+#onboarding {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--sand);
+  z-index: 500;
+  overflow-y: auto;
+}
+#onboarding.open { display: flex; flex-direction: column; }
+
+.ob-step { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 24px; text-align: center; }
+.ob-step.active { display: flex; animation: fadeUp 0.4s ease; }
+
+.ob-logo { margin-bottom: 32px; }
+.ob-watermark {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--water-xs); border: 2px solid var(--water-lt);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+}
+.ob-watermark svg { width: 36px; height: 36px; }
+
+.ob-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 400; color: var(--deep);
+  line-height: 1.2; margin-bottom: 12px;
+}
+.ob-title em { font-style: italic; color: var(--water-dk); }
+.ob-sub {
+  font-size: 16px; font-weight: 300; color: var(--clay);
+  line-height: 1.7; max-width: 340px; margin-bottom: 40px;
+}
+.ob-verse {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 15px; color: var(--stone); margin-bottom: 48px;
+  max-width: 280px; line-height: 1.6;
+}
+
+.ob-pillars {
+  display: flex; flex-direction: column; gap: 16px;
+  width: 100%; max-width: 340px; margin-bottom: 48px;
+}
+.ob-pillar {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--white); border-radius: 14px;
+  padding: 16px; text-align: left;
+  box-shadow: 0 1px 3px rgba(61,50,42,0.05);
+}
+.ob-pillar-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ob-pillar-icon svg { width: 18px; height: 18px; }
+.ob-pillar-title { font-size: 14px; font-weight: 500; color: var(--deep); margin-bottom: 2px; }
+.ob-pillar-body { font-size: 13px; color: var(--clay); font-weight: 300; line-height: 1.5; }
+
+.ob-btn {
+  padding: 14px 40px; background: var(--water-dk); border: none;
+  border-radius: 28px; font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 500; color: white;
+  cursor: pointer; transition: background 0.2s;
+  width: 100%; max-width: 340px;
+}
+.ob-btn:hover { background: var(--bark); }
+
+.ob-skip {
+  margin-top: 16px; font-size: 13px; color: var(--stone);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: color 0.2s;
+}
+.ob-skip:hover { color: var(--clay); }
+
+/* Step 2 — follow people */
+.ob-people { width: 100%; max-width: 400px; margin-bottom: 32px; }
+.ob-person {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--white); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(61,50,42,0.04);
+}
+.ob-person-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--water-lt); display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--water-dk);
+  flex-shrink: 0; overflow: hidden;
+}
+.ob-person-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.ob-person-name { font-size: 15px; font-weight: 500; color: var(--deep); }
+.ob-person-handle { font-size: 12px; color: var(--clay); margin-top: 1px; }
+.ob-follow-btn {
+  margin-left: auto; font-size: 12px; font-weight: 500;
+  padding: 6px 14px; border-radius: 20px;
+  border: 1.5px solid var(--water-dk); color: var(--water-dk);
+  background: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.18s; white-space: nowrap;
+}
+.ob-follow-btn:hover { background: var(--water-xs); }
+.ob-follow-btn.following { border-color: var(--sage); color: #4a6b46; background: var(--sage-xs); }
+
+.ob-loading { padding: 32px 0; color: var(--clay); font-size: 14px; display: flex; align-items: center; gap: 10px; justify-content: center; }
+
+/* ══════════════════════════════════════
    POST DETAIL MODAL
 ══════════════════════════════════════ */
 .post-detail-overlay {
@@ -810,6 +914,71 @@ body {
 </style>
 </head>
 <body>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+
+  <!-- Step 1: Welcome -->
+  <div class="ob-step active" id="ob-step-1">
+    <div class="ob-logo">
+      <img src="/logos/Still Waters Logo - Horizontal Color.png" alt="Still Waters" style="height:36px;width:auto;" />
+    </div>
+    <div class="ob-watermark">
+      <svg viewBox="0 0 36 36" fill="none" stroke="var(--water-dk)" stroke-width="1.5" stroke-linecap="round">
+        <path d="M18 4C18 4 8 14 8 22C8 27.5 12.5 32 18 32C23.5 32 28 27.5 28 22C28 14 18 4 18 4Z"/>
+      </svg>
+    </div>
+    <div class="ob-title">A place to <em>pause</em>.</div>
+    <div class="ob-sub">Still Waters is a quiet place for your faith — to share, to pray, and to be known.</div>
+
+    <div class="ob-pillars">
+      <div class="ob-pillar">
+        <div class="ob-pillar-icon" style="background:var(--water-xs);">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--water-dk)" stroke-width="1.5" stroke-linecap="round"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+        </div>
+        <div>
+          <div class="ob-pillar-title">Share what's on your heart</div>
+          <div class="ob-pillar-body">Thoughts, prayers, and Scripture — all in one quiet feed.</div>
+        </div>
+      </div>
+      <div class="ob-pillar">
+        <div class="ob-pillar-icon" style="background:var(--sage-xs);">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--sage)" stroke-width="1.5" stroke-linecap="round"><path d="M11 2C11 2 5 8 5 12.5C5 15.985 7.686 18.8 11 18.8C14.314 18.8 17 15.985 17 12.5C17 8 11 2 11 2Z"/></svg>
+        </div>
+        <div>
+          <div class="ob-pillar-title">Pray for one another</div>
+          <div class="ob-pillar-body">Share prayer requests and stand with others in theirs.</div>
+        </div>
+      </div>
+      <div class="ob-pillar">
+        <div class="ob-pillar-icon" style="background:var(--linen);">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--bark)" stroke-width="1.5" stroke-linecap="round"><path d="M4 6h16M4 10h10M4 14h8"/></svg>
+        </div>
+        <div>
+          <div class="ob-pillar-title">Scripture every day</div>
+          <div class="ob-pillar-body">A fresh verse each morning to anchor your day.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-verse">"He leads me beside still waters. He restores my soul."<br>— Psalm 23:2-3</div>
+    <button class="ob-btn" onclick="obNextStep()">Get started →</button>
+  </div>
+
+  <!-- Step 2: Follow people -->
+  <div class="ob-step" id="ob-step-2">
+    <div class="ob-title" style="margin-bottom:8px;">Find your <em>people</em></div>
+    <div class="ob-sub" style="margin-bottom:24px;">Follow a few people to fill your feed. You can always find more in Search.</div>
+
+    <div class="ob-people" id="obPeopleList">
+      <div class="ob-loading"><div class="spinner"></div>Finding people…</div>
+    </div>
+
+    <button class="ob-btn" onclick="completeOnboarding()">Enter Still Waters →</button>
+    <button class="ob-skip" onclick="completeOnboarding()">Skip for now</button>
+  </div>
+
+</div>
 
 <!-- NAV -->
 <div id="nav">
@@ -1219,8 +1388,14 @@ async function init() {
 
   // Determine starting view from URL
   const path = window.location.pathname;
-  const startView = path.includes('prayer') ? 'prayer' : path.includes('profile') ? 'profile' : 'feed';
-  navigate(startView, true);
+  const startView = path.includes('prayer') ? 'prayer' : path.includes('profile') ? 'profile' : path.includes('search') ? 'search' : 'feed';
+
+  // Show onboarding for new users, otherwise go to feed
+  if (!currentProfile?.onboarded) {
+    showOnboarding();
+  } else {
+    navigate(startView, true);
+  }
 
   // Load sidebar prayer counts
   loadSidebarCounts();
@@ -2497,6 +2672,215 @@ function showToast(message) {
   `;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2500);
+}
+
+// ══════════════════════════════════════
+// POST DETAIL
+// ══════════════════════════════════════
+let detailPostId = null;
+
+async function openPostDetail(postId) {
+  detailPostId = postId;
+  const token = getToken();
+
+  document.getElementById('postDetailPost').innerHTML = `<div class="loading"><div class="spinner"></div>Loading…</div>`;
+  document.getElementById('postDetailCommentsList').innerHTML = '';
+  document.getElementById('postDetailOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Set input avatar
+  const pdAvatar = document.getElementById('pdAvatar');
+  if (currentProfile?.avatar_url) {
+    pdAvatar.innerHTML = `<img src="${currentProfile.avatar_url}" alt="me" />`;
+  } else {
+    pdAvatar.textContent = (currentProfile?.full_name || 'M')[0].toUpperCase();
+  }
+
+  // Fetch post with profile and selahs
+  const [postRes, commentsRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=*,profile:profiles(id,full_name,avatar_url),selahs(user_id)`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    }),
+    fetch(`${SUPABASE_URL}/rest/v1/comments?post_id=eq.${postId}&select=*,profile:profiles(id,full_name,avatar_url)&order=created_at.asc`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    })
+  ]);
+
+  const posts = postRes.ok ? await postRes.json() : [];
+  const comments = commentsRes.ok ? await commentsRes.json() : [];
+  const post = posts[0];
+  if (!post) { document.getElementById('postDetailPost').innerHTML = '<div style="padding:20px;color:var(--clay);">Post not found.</div>'; return; }
+
+  const p = post.profile || {};
+  const name = p.full_name || 'Someone';
+  const initial = name[0].toUpperCase();
+  const avatarUrl = p.avatar_url;
+  const selahCount = post.selahs ? post.selahs.length : 0;
+  const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
+  const isOwnPost = p.id === currentUser.id;
+  const avatarHtml = avatarUrl ? `<div class="post-detail-avatar"><img src="${avatarUrl}" alt="${name}" /></div>` : `<div class="post-detail-avatar">${initial}</div>`;
+
+  document.getElementById('postDetailPost').innerHTML = `
+    <div class="post-detail-author">
+      ${avatarHtml}
+      <div>
+        <div class="post-detail-name">${name}</div>
+        <div class="post-detail-time">${getTimeAgo(post.created_at)}</div>
+      </div>
+      <div class="post-type-tag tag-${post.type}" style="margin-left:auto;">${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</div>
+    </div>
+    <div class="post-detail-text">${post.body}</div>
+    ${post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : ''}
+    <div class="post-detail-actions">
+      ${!isOwnPost ? `<button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','detail')">
+        <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
+      </button>` : `<span style="font-size:12px;color:var(--stone);">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
+      <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
+    </div>
+  `;
+
+  // Render comments
+  const label = document.getElementById('postDetailCommentsLabel');
+  label.textContent = comments.length ? `Comments · ${comments.length}` : 'Comments';
+
+  const list = document.getElementById('postDetailCommentsList');
+  if (!comments.length) {
+    list.innerHTML = `<div style="text-align:center;padding:20px 0;color:var(--clay);font-size:14px;font-style:italic;">No comments yet — be the first.</div>`;
+  } else {
+    list.innerHTML = comments.map(c => {
+      const cp = c.profile || {};
+      const cn = cp.full_name || 'Someone';
+      const caHtml = cp.avatar_url ? `<div class="comment-avatar"><img src="${cp.avatar_url}" alt="${cn}" /></div>` : `<div class="comment-avatar">${cn[0]}</div>`;
+      const isOwn = cp.id === currentUser.id;
+      return `
+        <div class="comment-item" id="dcomment-${c.id}">
+          ${caHtml}
+          <div class="comment-bubble" style="flex:1;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div class="comment-author">${cn}</div>
+              ${isOwn ? `<button class="comment-delete" onclick="deleteDetailComment('${c.id}','${postId}')">✕</button>` : ''}
+            </div>
+            <div class="comment-body">${c.body}</div>
+            <div class="comment-time">${getTimeAgo(c.created_at)}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+async function submitDetailComment() {
+  const input = document.getElementById('pdCommentInput');
+  const body = input.value.trim();
+  if (!body || !detailPostId) return;
+  const token = getToken();
+  input.value = ''; input.style.height = 'auto';
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ post_id: detailPostId, user_id: currentUser.id, body })
+  });
+  if (res.ok) {
+    // Notify post owner
+    const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${detailPostId}&select=user_id`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    });
+    if (postRes.ok) { const posts = await postRes.json(); if (posts[0]) createNotification(posts[0].user_id, 'comment', detailPostId); }
+    openPostDetail(detailPostId); // Reload to show new comment
+    updateCommentCount(detailPostId);
+  }
+}
+
+async function deleteDetailComment(commentId, postId) {
+  const token = getToken();
+  const el = document.getElementById('dcomment-' + commentId);
+  if (el) el.style.opacity = '0.5';
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?id=eq.${commentId}&user_id=eq.${currentUser.id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+  });
+  if (res.ok) {
+    if (el) el.remove();
+    updateCommentCount(postId);
+    const label = document.getElementById('postDetailCommentsLabel');
+    const remaining = document.querySelectorAll('[id^="dcomment-"]').length;
+    label.textContent = remaining ? `Comments · ${remaining}` : 'Comments';
+  } else if (el) el.style.opacity = '1';
+}
+
+function closePostDetail() {
+  document.getElementById('postDetailOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  detailPostId = null;
+}
+
+function closePostDetailIfOutside(e) {
+  if (e.target === document.getElementById('postDetailOverlay')) closePostDetail();
+}
+
+// ══════════════════════════════════════
+// EDIT POST
+// ══════════════════════════════════════
+let editingPostId = null;
+
+function openEditPost(postId, currentBody) {
+  editingPostId = postId;
+  document.getElementById('editPostTextarea').value = currentBody;
+  document.getElementById('editPostOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {
+    const ta = document.getElementById('editPostTextarea');
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+    ta.focus();
+  }, 50);
+}
+
+function closeEditPost() {
+  document.getElementById('editPostOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  editingPostId = null;
+}
+
+function closeEditPostIfOutside(e) {
+  if (e.target === document.getElementById('editPostOverlay')) closeEditPost();
+}
+
+async function saveEditPost() {
+  const token = getToken();
+  const body = document.getElementById('editPostTextarea').value.trim();
+  if (!body || !editingPostId) return;
+
+  const btn = document.getElementById('editPostSaveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${editingPostId}&user_id=eq.${currentUser.id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json', 'Content-Profile': 'stillwaters',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ body })
+  });
+
+  if (res.ok) {
+    // Update body in the DOM without full reload
+    const postEl = document.getElementById('post-' + editingPostId);
+    if (postEl) {
+      const bodyEl = postEl.querySelector('.post-body');
+      if (bodyEl) bodyEl.textContent = body;
+    }
+    closeEditPost();
+    // Reload feed/profile to sync
+    feedLoaded = false; profileLoaded = false;
+    if (currentView === 'feed') { loadFeed(); feedLoaded = true; }
+    if (currentView === 'profile') { renderProfile(); profileLoaded = true; }
+  } else {
+    alert('Something went wrong. Please try again.');
+  }
+
+  btn.textContent = 'Save changes'; btn.disabled = false;
 }
 
 // ── START ──
