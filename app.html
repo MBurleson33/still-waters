@@ -3152,7 +3152,7 @@ async function loadNotifications() {
     const dest = destinations[n.type] || `navigate('feed')`;
 
     return `
-      <div class="notif-item ${n.read ? '' : 'unread'}" onclick="closeNotifAndGo(() => ${dest})" style="cursor:pointer;">
+      <div class="notif-item ${n.read ? '' : 'unread'}" id="notif-${n.id}" onclick="closeNotifAndGo(() => ${dest}, '${n.id}')" style="cursor:pointer;">
         ${avatarHtml}
         <div style="flex:1;">
           <div class="notif-text">${messages[n.type] || 'New notification'}</div>
@@ -3177,13 +3177,29 @@ async function markAllRead() {
   document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
 }
 
-function closeNotifAndGo(action) {
+function closeNotifAndGo(action, notifId) {
+  // Mark this notification as read
+  if (notifId) markNotifRead(notifId);
   // Close dropdown
   document.getElementById('notifDropdown').classList.remove('open');
-  // Small delay so dropdown closes before navigation
   setTimeout(() => {
     if (typeof action === 'function') action();
   }, 50);
+}
+
+async function markNotifRead(notifId) {
+  const token = getToken();
+  await fetch(`${SUPABASE_URL}/rest/v1/notifications?id=eq.${notifId}&user_id=eq.${currentUser.id}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ read: true })
+  });
+  // Remove unread style
+  const el = document.getElementById('notif-' + notifId);
+  if (el) el.classList.remove('unread');
+  // Update badge
+  const unread = document.querySelectorAll('.notif-item.unread').length;
+  document.getElementById('notifBadge').classList.toggle('visible', unread > 0);
 }
 
 function toggleNotifDropdown() {
@@ -3192,7 +3208,7 @@ function toggleNotifDropdown() {
   if (isOpen) {
     closeAvatarDropdown();
     loadNotifications();
-    markAllRead();
+    // Don't auto-mark read — only mark read on explicit action
   }
 }
 
