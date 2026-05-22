@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Still Waters — A place to pause.</title>
 <meta name="description" content="Still Waters is a Christian faith community built around prayer, Scripture, and unhurried connection. Share thoughts, lift up prayer requests, and be known.">
 <meta name="keywords" content="Christian social network, faith community, prayer app, Bible verse, Christian app, prayer requests, Scripture, faith sharing">
@@ -827,5 +827,20 @@ footer {
   </div>
 </footer>
 
+<script>
+// If already logged in, go straight to the feed
+(function() {
+  const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (!sbKey) return;
+  try {
+    const session = JSON.parse(localStorage.getItem(sbKey));
+    if (!session?.access_token) return;
+    // Check if token is still valid (not expired)
+    if (session.expires_at && session.expires_at < Math.floor(Date.now() / 1000)) return;
+    // Has a valid session — go to feed
+    window.location.replace('/feed');
+  } catch {}
+})();
+</script>
 </body>
 </html>
