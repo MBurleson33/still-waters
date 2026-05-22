@@ -610,32 +610,45 @@ function showEmailForm() {
   const existing = document.getElementById('email-form');
   if (existing) { existing.remove(); return; }
 
+  // Hide the "no password needed" hint while form is open
+  const hint = document.querySelector('.btn-email').nextElementSibling;
+  if (hint) hint.style.display = 'none';
+
   const form = document.createElement('div');
   form.id = 'email-form';
-  form.style.cssText = 'margin-top: 16px;';
+  form.style.cssText = 'margin-top: 12px;';
   form.innerHTML = `
     <input
       id="magic-email"
       type="email"
       placeholder="your@email.com"
-      style="width:100%;padding:12px 14px;border:1.5px solid #EDE7D9;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;color:#3D322A;background:#FAF7F2;outline:none;margin-bottom:10px;"
+      style="width:100%;padding:12px 14px;border:1.5px solid #EDE7D9;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:16px;color:#3D322A;background:#FAF7F2;outline:none;margin-bottom:10px;display:block;"
       onkeydown="if(event.key==='Enter') sendMagicLink()"
     />
     <button
+      id="magic-btn"
       onclick="sendMagicLink()"
       style="width:100%;padding:12px;background:#4A7A8F;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:white;cursor:pointer;"
     >Send magic link</button>
-    <p id="magic-msg" style="font-size:13px;color:#A89880;text-align:center;margin-top:10px;display:none;"></p>
+    <p id="magic-msg" style="font-size:13px;color:#A89880;text-align:center;margin-top:10px;display:none;line-height:1.5;"></p>
   `;
-  document.querySelector('.btn-email').after(form);
+
+  // Insert after the hint paragraph (or after btn-email if no hint)
+  const insertAfter = hint || document.querySelector('.btn-email');
+  insertAfter.after(form);
   document.getElementById('magic-email').focus();
 }
 
 async function sendMagicLink() {
   const email = document.getElementById('magic-email').value.trim();
   const msg = document.getElementById('magic-msg');
+  const btn = document.getElementById('magic-btn');
 
   if (!email) return;
+
+  btn.textContent = 'Sending…';
+  btn.style.opacity = '0.7';
+  btn.disabled = true;
 
   const response = await fetch(`${SUPABASE_URL}/auth/v1/magiclink`, {
     method: 'POST',
@@ -645,17 +658,22 @@ async function sendMagicLink() {
     },
     body: JSON.stringify({
       email,
-      options: { emailRedirectTo: window.location.origin + '/feed' }
+      options: { emailRedirectTo: 'https://by-still-waters.com/auth' }
     })
   });
 
   msg.style.display = 'block';
   if (response.ok) {
     msg.style.color = '#4A7A8F';
-    msg.textContent = 'Check your email — a link is on its way.';
+    msg.textContent = '✓ Check your email — a sign-in link is on its way.';
+    btn.textContent = 'Sent!';
+    btn.style.background = '#8FA68A';
   } else {
     msg.style.color = '#c0392b';
     msg.textContent = 'Something went wrong. Please try again.';
+    btn.textContent = 'Send magic link';
+    btn.style.opacity = '1';
+    btn.disabled = false;
   }
 }
 
