@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /terms
+Allow: /privacy
+Disallow: /feed
+Disallow: /prayer
+Disallow: /profile
+Disallow: /search
+Disallow: /auth
+Disallow: /api/
+
+Sitemap: https://by-still-waters.com/sitemap.xml
