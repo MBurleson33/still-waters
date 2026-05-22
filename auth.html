@@ -572,7 +572,7 @@ function signInWithGoogle() {
   const btn = document.querySelector('.btn-google');
   btn.disabled = true;
   btn.innerHTML = '<span style="opacity:0.6">Redirecting…</span>';
-  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/feed');
+  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/auth');
   window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
 }
 
@@ -630,15 +630,36 @@ async function sendMagicLink() {
   }
 }
 
-// ── CHECK IF ALREADY SIGNED IN ──
-async function checkSession() {
+// ── HANDLE CALLBACK — save session from URL hash ──
+function handleAuthCallback() {
   const hash = window.location.hash;
-  if (hash && hash.includes('access_token')) {
-    window.location.href = '/feed';
-  }
+  if (!hash) return;
+
+  const params = new URLSearchParams(hash.substring(1));
+  const accessToken = params.get('access_token');
+  const refreshToken = params.get('refresh_token');
+  const expiresIn = params.get('expires_in');
+  const expiresAt = params.get('expires_at');
+  const tokenType = params.get('token_type');
+
+  if (!accessToken) return;
+
+  // Save session in Supabase format
+  const sessionKey = `sb-olhpiqxxofcwlkpvimug-auth-token`;
+  const session = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_in: parseInt(expiresIn) || 3600,
+    expires_at: parseInt(expiresAt) || Math.floor(Date.now() / 1000) + 3600,
+    token_type: tokenType || 'bearer',
+  };
+  localStorage.setItem(sessionKey, JSON.stringify(session));
+
+  // Go to feed
+  window.location.replace('/feed');
 }
 
-checkSession();
+handleAuthCallback();
 </script>
 </body>
 </html>
