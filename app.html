@@ -3277,10 +3277,45 @@ function openSearch() {
   document.getElementById('searchModalInput').value = '';
   document.querySelector('.search-modal-body .search-section-label').textContent = 'Suggested — people to follow';
   loadSuggested();
-  setTimeout(() => document.getElementById('searchModalInput').focus(), 100);
+  setTimeout(() => document.getElementById('searchModalInput').focus(), 300);
+
+  // Drag to dismiss
+  const modal = document.getElementById('search-modal');
+  let startY = 0, currentY = 0, dragging = false;
+
+  modal.addEventListener('touchstart', e => {
+    // Only drag from the handle area
+    if (!e.target.closest('.search-modal-handle-wrap')) return;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    modal.style.transition = 'none';
+  }, { passive: true });
+
+  modal.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    currentY = e.touches[0].clientY;
+    const dy = Math.max(0, currentY - startY);
+    modal.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+
+  modal.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    modal.style.transition = '';
+    const dy = currentY - startY;
+    if (dy > 100) {
+      closeSearch();
+    } else {
+      modal.style.transform = '';
+    }
+    startY = 0; currentY = 0;
+  });
 }
 
 function closeSearch() {
+  const modal = document.getElementById('search-modal');
+  modal.style.transform = '';
+  modal.style.transition = '';
   document.getElementById('search-modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   document.getElementById('searchModalInput').value = '';
