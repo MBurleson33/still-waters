@@ -572,7 +572,7 @@ function signInWithGoogle() {
   const btn = document.querySelector('.btn-google');
   btn.disabled = true;
   btn.innerHTML = '<span style="opacity:0.6">Redirecting…</span>';
-  const redirectTo = encodeURIComponent('https://still-waters-fawn.vercel.app/auth');
+  const redirectTo = encodeURIComponent('https://by-still-waters.com/auth');
   window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
 }
 
