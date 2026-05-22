@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Still Waters</title>
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sand:      #F5F0E8;
+  --linen:     #EDE7D9;
+  --stone:     #C8BBA8;
+  --clay:      #A89880;
+  --bark:      #6B5D4F;
+  --deep:      #3D322A;
+  --water:     #7BA7B8;
+  --water-lt:  #B8D4DE;
+  --water-dk:  #4A7A8F;
+  --water-xs:  #E8F2F6;
+  --sage:      #8FA68A;
+  --sage-lt:   #C8D9C5;
+  --sage-xs:   #EEF4ED;
+  --cream:     #FAF7F2;
+  --white:     #FFFFFF;
+  --nav-h:     56px;
+  --sidebar-w: 300px;
+}
+
+html, body { height: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--sand);
+  color: var(--deep);
+  overflow: hidden;
+}
+
+@keyframes fadeUp   { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+@keyframes selahPop { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
+@keyframes spin     { to { transform:rotate(360deg); } }
+@keyframes streakPulse { 0%,100%{box-shadow:0 0 0 0 rgba(123,167,184,0.3)} 50%{box-shadow:0 0 0 6px rgba(123,167,184,0)} }
+
+/* ══════════════════════════════════════
+   NAV
+══════════════════════════════════════ */
+#nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  z-index: 200;
+  background: rgba(250,247,242,0.95);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(200,187,168,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+.nav-logo { display:flex; align-items:center; gap:8px; text-decoration:none; cursor:pointer; }
+.nav-right { display:flex; align-items:center; gap:10px; }
+.nav-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:var(--water-lt);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--water-dk);
+  cursor:pointer; border:2px solid transparent; transition:border-color 0.2s; overflow:hidden;
+}
+.nav-avatar:hover { border-color:var(--water); }
+.nav-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.nav-icon-btn {
+  width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer; color:var(--clay);
+  transition:background 0.2s; position:relative;
+}
+.nav-icon-btn:hover { background:var(--linen); color:var(--bark); }
+.nav-icon-btn svg { width:18px; height:18px; }
+.nav-dot { position:absolute; top:6px; right:6px; width:6px; height:6px; background:var(--water); border-radius:50%; border:1.5px solid var(--cream); }
+
+/* ══════════════════════════════════════
+   APP SHELL
+══════════════════════════════════════ */
+#shell {
+  display: flex;
+  height: 100vh;
+  padding-top: var(--nav-h);
+}
+
+/* ══════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════ */
+#sidebar {
+  display: none;
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto;
+  padding: 28px 24px 40px;
+  background: var(--sand);
+  border-right: 1px solid rgba(200,187,168,0.25);
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-scripture {
+  background: var(--deep); border-radius: 16px;
+  padding: 20px 22px; position: relative; overflow: hidden;
+}
+.sb-scripture::before {
+  content:''; position:absolute; top:-30px; right:-30px;
+  width:120px; height:120px;
+  background:radial-gradient(circle,rgba(123,167,184,0.18) 0%,transparent 65%);
+  pointer-events:none;
+}
+.sb-scripture-label { font-size:10px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--water); margin-bottom:10px; }
+.sb-scripture-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; font-weight:300; color:var(--cream); line-height:1.55; margin-bottom:8px; }
+.sb-scripture-ref { font-size:11px; color:var(--water); }
+
+.sb-nav { background:var(--white); border-radius:16px; padding:12px; box-shadow:0 1px 3px rgba(61,50,42,0.04); }
+.sb-nav-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; border-radius:10px;
+  font-size:14px; color:var(--bark); cursor:pointer;
+  transition:background 0.18s; border:none; background:none;
+  width:100%; text-align:left; font-family:'DM Sans',sans-serif;
+}
+.sb-nav-item:hover { background:var(--linen); }
+.sb-nav-item.active { color:var(--water-dk); background:var(--water-xs); font-weight:500; }
+.sb-nav-item svg { width:18px; height:18px; flex-shrink:0; }
+
+.sb-prayer-card { background:var(--white); border-radius:16px; padding:16px 18px; box-shadow:0 1px 3px rgba(61,50,42,0.04); }
+.sb-prayer-label { font-size:10px; font-weight:500; letter-spacing:0.16em; text-transform:uppercase; color:var(--clay); margin-bottom:12px; }
+.sb-prayer-stat { display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--linen); }
+.sb-prayer-stat:last-child { border-bottom:none; padding-bottom:0; }
+.sb-prayer-stat-label { font-size:13px; color:var(--bark); font-weight:300; }
+.sb-prayer-stat-value { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--deep); font-weight:400; }
+.sb-prayer-stat-value.sage { color:#4a6b46; }
+
+.sb-verse { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:12px; color:var(--stone); text-align:center; padding:0 4px; line-height:1.6; }
+
+/* ══════════════════════════════════════
+   CONTENT AREA
+══════════════════════════════════════ */
+#content {
+  flex: 1;
+  height: calc(100vh - var(--nav-h));
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.view { display:none; max-width:620px; margin:0 auto; padding:28px 20px 100px; }
+.view.active { display:block; animation:fadeIn 0.3s ease; }
+
+/* ══════════════════════════════════════
+   SHARED COMPONENTS
+══════════════════════════════════════ */
+.loading { display:flex; align-items:center; justify-content:center; padding:48px 0; gap:10px; font-size:14px; color:var(--clay); }
+.spinner { width:18px; height:18px; border-radius:50%; border:2px solid var(--linen); border-top-color:var(--water); animation:spin 0.8s linear infinite; }
+
+.post-card {
+  background:var(--white); border-radius:16px;
+  padding:20px 22px 16px; margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(61,50,42,0.04);
+  transition:box-shadow 0.2s;
+}
+.post-card:hover { box-shadow:0 2px 12px rgba(61,50,42,0.07); }
+.post-card.prayer-card { border-left:3px solid rgba(143,166,138,0.5); }
+.post-meta { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.post-avatar {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--water-lt);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--water-dk);
+  flex-shrink:0; overflow:hidden;
+}
+.post-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.post-author { font-size:14px; font-weight:500; color:var(--deep); }
+.post-time   { font-size:11px; color:var(--stone); margin-top:1px; }
+.post-type-tag { margin-left:auto; font-size:10px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; padding:3px 9px; border-radius:20px; }
+.tag-thought   { color:var(--clay);     background:var(--linen); }
+.tag-prayer    { color:#4a6b46;         background:rgba(143,166,138,0.15); }
+.tag-scripture { color:var(--water-dk); background:var(--water-xs); }
+.post-body { font-size:15px; font-weight:300; line-height:1.75; color:var(--bark); margin-bottom:14px; }
+.post-scripture-block { background:var(--cream); border-left:2px solid var(--water); padding:11px 15px; border-radius:0 8px 8px 0; margin-bottom:14px; }
+.post-scripture-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--bark); line-height:1.6; }
+.post-scripture-ref { font-size:11px; color:var(--clay); margin-top:5px; }
+.post-actions { display:flex; align-items:center; gap:10px; padding-top:12px; border-top:1px solid var(--linen); }
+.selah-btn {
+  display:flex; align-items:center; gap:6px; padding:5px 14px; border-radius:20px;
+  border:1.5px solid var(--linen); background:none;
+  font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--clay);
+  cursor:pointer; transition:all 0.18s;
+}
+.selah-btn:hover { border-color:var(--water); color:var(--water-dk); background:var(--water-xs); }
+.selah-btn.active { border-color:var(--water); color:var(--water-dk); background:var(--water-xs); animation:selahPop 0.3s ease; }
+.selah-count { font-family:'DM Sans',sans-serif; font-size:12px; }
+.action-btn { font-size:13px; color:var(--clay); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:300; padding:5px 2px; transition:color 0.18s; }
+.action-btn:hover { color:var(--bark); }
+
+/* ══════════════════════════════════════
+   FEED VIEW
+══════════════════════════════════════ */
+.scripture-card {
+  background:var(--deep); border-radius:16px;
+  padding:22px 26px; margin-bottom:20px; position:relative; overflow:hidden;
+}
+.scripture-card::before { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; background:radial-gradient(circle,rgba(123,167,184,0.15) 0%,transparent 65%); pointer-events:none; }
+.scripture-card-label { font-size:10px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--water); margin-bottom:10px; }
+.scripture-card-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:18px; font-weight:300; color:var(--cream); line-height:1.55; margin-bottom:8px; }
+.scripture-card-ref { font-size:12px; color:var(--water); }
+
+.compose { background:var(--white); border-radius:16px; padding:18px 20px 14px; margin-bottom:20px; box-shadow:0 1px 3px rgba(61,50,42,0.05); }
+.compose-top { display:flex; align-items:flex-start; gap:12px; }
+.compose-avatar { width:36px; height:36px; border-radius:50%; background:var(--water-lt); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--water-dk); flex-shrink:0; margin-top:2px; overflow:hidden; }
+.compose-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.compose-textarea { flex:1; border:none; outline:none; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:300; color:var(--deep); resize:none; min-height:60px; line-height:1.6; background:transparent; }
+.compose-textarea::placeholder { color:var(--stone); }
+.compose-types { display:flex; gap:6px; margin:12px 0 0 48px; padding-top:12px; border-top:1px solid var(--linen); flex-wrap:wrap; }
+.type-btn { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:20px; border:1.5px solid var(--linen); background:none; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--clay); cursor:pointer; transition:all 0.18s; }
+.type-btn:hover { border-color:var(--stone); color:var(--bark); }
+.type-btn.active-thought   { border-color:var(--bark);     color:var(--bark);     background:var(--linen); }
+.type-btn.active-prayer    { border-color:var(--sage);     color:var(--sage);     background:rgba(143,166,138,0.1); }
+.type-btn.active-scripture { border-color:var(--water-dk); color:var(--water-dk); background:var(--water-xs); }
+.scripture-picker { margin:10px 0 0 48px; display:none; }
+.scripture-picker.visible { display:block; }
+.scripture-input { width:100%; padding:9px 14px; border:1.5px solid var(--linen); border-radius:8px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px; color:var(--bark); background:var(--cream); outline:none; transition:border-color 0.2s; }
+.scripture-input:focus { border-color:var(--water); }
+.scripture-input::placeholder { color:var(--stone); }
+.compose-bottom { display:flex; align-items:center; justify-content:flex-end; margin-top:12px; }
+.post-btn { padding:8px 20px; background:var(--water-dk); border:none; border-radius:20px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:white; cursor:pointer; transition:background 0.2s; }
+.post-btn:hover { background:var(--bark); }
+.post-btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+.feed-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; margin-top:32px; padding:0 2px; }
+.feed-header-left { display:flex; align-items:center; gap:10px; }
+.feed-header-rule { width:28px; height:2px; background:var(--water); border-radius:2px; }
+.feed-title { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; color:var(--deep); }
+.feed-title em { font-style:italic; color:var(--water-dk); }
+.feed-meta { font-size:11px; color:var(--stone); letter-spacing:0.06em; text-transform:uppercase; }
+.feed { display:flex; flex-direction:column; }
+
+/* ══════════════════════════════════════
+   PRAYER VIEW
+══════════════════════════════════════ */
+.prayer-header { margin-bottom:16px; }
+.prayer-header-top { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+.prayer-header-rule { width:28px; height:2px; background:var(--sage); border-radius:2px; }
+.prayer-page-title { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:400; color:var(--deep); }
+.prayer-page-title em { font-style:italic; color:var(--sage); }
+.prayer-page-sub { font-size:13px; color:var(--clay); padding-left:40px; }
+
+.summary-card { background:var(--deep); border-radius:16px; padding:20px 22px; margin-bottom:16px; display:flex; align-items:center; position:relative; overflow:hidden; }
+.summary-card::before { content:''; position:absolute; top:-40px; right:-20px; width:160px; height:160px; background:radial-gradient(circle,rgba(143,166,138,0.15) 0%,transparent 65%); }
+.summary-stat { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; position:relative; }
+.summary-stat+.summary-stat::before { content:''; position:absolute; left:0; top:15%; height:70%; width:1px; background:rgba(255,255,255,0.08); }
+.summary-value { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; color:var(--cream); line-height:1; }
+.summary-value.sage { color:var(--sage-lt); }
+.summary-label { font-size:10px; font-weight:400; letter-spacing:0.14em; text-transform:uppercase; color:var(--stone); }
+
+.filter-tabs { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+.filter-tab { padding:7px 16px; border-radius:20px; border:1.5px solid var(--linen); background:none; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--clay); cursor:pointer; transition:all 0.18s; }
+.filter-tab:hover { border-color:var(--stone); color:var(--bark); }
+.filter-tab.active { border-color:var(--sage); color:#4a6b46; background:var(--sage-xs); }
+
+.prayer-card-wrap { background:var(--white); border-radius:16px; padding:20px 22px 0; box-shadow:0 1px 3px rgba(61,50,42,0.04); margin-bottom:12px; border-left:3px solid rgba(143,166,138,0.45); overflow:hidden; transition:box-shadow 0.2s; }
+.prayer-card-wrap:hover { box-shadow:0 2px 12px rgba(61,50,42,0.07); }
+.prayer-card-wrap.answered { border-left-color:var(--water); opacity:0.75; }
+.prayer-meta { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.prayer-avatar { width:36px; height:36px; border-radius:50%; background:var(--water-lt); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--water-dk); flex-shrink:0; overflow:hidden; }
+.prayer-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.prayer-author { font-size:14px; font-weight:500; color:var(--deep); }
+.prayer-time { font-size:11px; color:var(--stone); margin-top:1px; }
+.answered-badge { margin-left:auto; font-size:10px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--water-dk); background:var(--water-xs); padding:3px 9px; border-radius:20px; }
+.praying-badge { margin-left:auto; font-size:11px; color:#4a6b46; display:flex; align-items:center; gap:4px; }
+.praying-dot { width:6px; height:6px; border-radius:50%; background:var(--sage); animation:fadeIn 1s ease infinite alternate; }
+.prayer-body { font-size:15px; font-weight:300; line-height:1.75; color:var(--bark); margin-bottom:16px; }
+.prayer-actions { display:flex; align-items:center; gap:10px; padding:12px 0; border-top:1px solid var(--linen); }
+.pray-btn { display:flex; align-items:center; gap:5px; padding:5px 14px; border-radius:20px; border:1.5px solid var(--linen); background:none; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--clay); cursor:pointer; transition:all 0.18s; }
+.pray-btn:hover { border-color:var(--sage); color:#4a6b46; background:var(--sage-xs); }
+.pray-btn.active { border-color:var(--sage); color:#4a6b46; background:var(--sage-xs); }
+.write-prayer-btn { font-size:13px; color:var(--clay); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:300; padding:5px 2px; transition:color 0.18s; margin-left:auto; }
+.write-prayer-btn:hover { color:var(--bark); }
+.prayer-response-box { display:none; border-top:1px solid var(--linen); padding:14px 0 16px; }
+.prayer-response-box.visible { display:block; }
+.prayer-response-label { font-size:11px; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--sage); margin-bottom:10px; }
+.prayer-textarea { width:100%; border:1.5px solid var(--linen); border-radius:10px; padding:12px 14px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--bark); line-height:1.65; background:var(--cream); resize:none; outline:none; transition:border-color 0.2s; min-height:80px; }
+.prayer-textarea:focus { border-color:var(--sage); }
+.prayer-textarea::placeholder { color:var(--stone); }
+.prayer-response-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:10px; }
+.prayer-cancel-btn { font-size:13px; color:var(--clay); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.prayer-submit-btn { padding:7px 18px; border-radius:20px; background:var(--sage); border:none; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:white; cursor:pointer; }
+.prayer-submit-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.written-prayers { border-top:1px solid var(--linen); padding:14px 0 16px; }
+.written-prayers-label { font-size:10px; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--stone); margin-bottom:12px; }
+.written-prayer-item { display:flex; gap:10px; margin-bottom:12px; }
+.written-prayer-item:last-child { margin-bottom:0; }
+.written-prayer-avatar { width:26px; height:26px; border-radius:50%; background:var(--linen); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:12px; color:var(--bark); flex-shrink:0; margin-top:2px; overflow:hidden; }
+.written-prayer-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.written-prayer-bubble { background:var(--cream); border-radius:0 10px 10px 10px; padding:9px 12px; flex:1; }
+.written-prayer-name { font-size:11px; font-weight:500; color:var(--bark); margin-bottom:3px; }
+.written-prayer-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:14px; color:var(--bark); line-height:1.55; }
+
+/* ══════════════════════════════════════
+   PROFILE VIEW
+══════════════════════════════════════ */
+.profile-header-card { background:var(--white); border-radius:20px; overflow:hidden; margin-bottom:14px; box-shadow:0 1px 3px rgba(61,50,42,0.05); }
+.profile-cover { height:110px; background:linear-gradient(135deg,var(--deep) 0%,#2a4a58 60%,var(--water-dk) 100%); position:relative; overflow:hidden; }
+.cover-verse { position:absolute; bottom:14px; right:20px; font-family:'Cormorant Garamond',serif; font-style:italic; font-size:12px; color:rgba(255,255,255,0.35); }
+.profile-identity { padding:0 22px 20px; position:relative; }
+.profile-avatar-wrap { position:relative; display:inline-block; margin-top:-28px; margin-bottom:12px; cursor:pointer; }
+.profile-avatar-img { width:72px; height:72px; border-radius:50%; background:var(--water-lt); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:30px; color:var(--water-dk); border:4px solid var(--white); position:relative; z-index:1; overflow:hidden; }
+.profile-avatar-img img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.avatar-edit-badge { position:absolute; bottom:2px; right:2px; width:20px; height:20px; background:var(--water-dk); border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; z-index:2; }
+.profile-streak-ring { position:absolute; inset:-5px; border-radius:50%; border:2px solid var(--water); animation:streakPulse 3s ease-in-out infinite; z-index:0; }
+.profile-edit-btn { position:absolute; top:12px; right:0; display:flex; align-items:center; gap:6px; padding:7px 16px; border:1.5px solid var(--linen); border-radius:20px; background:none; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--bark); cursor:pointer; transition:all 0.18s; }
+.profile-edit-btn:hover { border-color:var(--stone); background:var(--linen); }
+.profile-name { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:400; color:var(--deep); margin-bottom:2px; }
+.profile-handle { font-size:13px; font-weight:300; color:var(--clay); margin-bottom:10px; }
+.profile-bio { font-size:14px; font-weight:300; line-height:1.7; color:var(--bark); margin-bottom:18px; max-width:420px; }
+.profile-stats { display:flex; border-top:1px solid var(--linen); padding-top:16px; }
+.stat-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; position:relative; }
+.stat-item+.stat-item::before { content:''; position:absolute; left:0; top:20%; height:60%; width:1px; background:var(--linen); }
+.stat-value { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:400; color:var(--deep); line-height:1; }
+.stat-value.water { color:var(--water-dk); }
+.stat-label { font-size:10px; font-weight:400; letter-spacing:0.12em; text-transform:uppercase; color:var(--stone); }
+
+.streak-card { background:var(--deep); border-radius:16px; padding:20px 22px; margin-bottom:14px; display:flex; align-items:center; gap:18px; position:relative; overflow:hidden; }
+.streak-card::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle,rgba(123,167,184,0.18) 0%,transparent 65%); }
+.streak-flame { width:48px; height:48px; border-radius:14px; background:rgba(123,167,184,0.15); border:1px solid rgba(123,167,184,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:22px; }
+.streak-label { font-size:10px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--water); margin-bottom:4px; }
+.streak-value { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; color:var(--cream); line-height:1; margin-bottom:2px; }
+.streak-sub { font-size:12px; color:var(--stone); }
+.streak-dots { display:flex; gap:5px; margin-top:10px; }
+.streak-dot { width:8px; height:8px; border-radius:50%; background:rgba(123,167,184,0.2); }
+.streak-dot.done { background:var(--water); }
+.streak-dot.today { background:var(--water-lt); box-shadow:0 0 0 2px rgba(123,167,184,0.3); }
+
+.faith-card { background:var(--white); border-radius:16px; padding:20px 22px; margin-bottom:14px; box-shadow:0 1px 3px rgba(61,50,42,0.04); }
+.faith-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.faith-card-title { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:400; color:var(--deep); }
+.faith-card-title em { font-style:italic; color:var(--water-dk); }
+.faith-edit-btn { font-size:12px; color:var(--clay); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.faith-edit-btn:hover { color:var(--bark); }
+.faith-fields { display:flex; flex-direction:column; gap:14px; }
+.faith-field { display:flex; gap:12px; align-items:flex-start; }
+.faith-icon { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+.faith-icon svg { width:15px; height:15px; }
+.icon-water { background:var(--water-xs); }
+.icon-sage  { background:rgba(143,166,138,0.15); }
+.icon-linen { background:var(--linen); }
+.faith-field-label { font-size:10px; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--stone); margin-bottom:2px; }
+.faith-field-value { font-size:14px; font-weight:300; color:var(--bark); line-height:1.5; }
+
+.posts-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; margin-top:8px; }
+.posts-rule { width:28px; height:2px; background:var(--water); border-radius:2px; }
+.posts-title { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; color:var(--deep); }
+.posts-title em { font-style:italic; color:var(--water-dk); }
+
+/* ══════════════════════════════════════
+   EDIT PROFILE MODAL
+══════════════════════════════════════ */
+.edit-overlay { display:none; position:fixed; inset:0; background:rgba(61,50,42,0.5); z-index:300; align-items:center; justify-content:center; padding:24px; }
+.edit-overlay.open { display:flex; }
+.edit-modal { background:var(--white); border-radius:20px; padding:32px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 8px 40px rgba(61,50,42,0.2); }
+.edit-modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.edit-modal-title { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:400; color:var(--deep); }
+.edit-modal-title em { font-style:italic; color:var(--water-dk); }
+.edit-close { width:32px; height:32px; border-radius:50%; border:none; background:var(--linen); cursor:pointer; font-size:18px; color:var(--clay); display:flex; align-items:center; justify-content:center; transition:background 0.2s; }
+.edit-close:hover { background:var(--stone); }
+.edit-field { margin-bottom:18px; }
+.edit-label { display:block; font-size:11px; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--clay); margin-bottom:6px; }
+.edit-input, .edit-textarea-field { width:100%; padding:10px 14px; border:1.5px solid var(--linen); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--deep); background:var(--cream); outline:none; transition:border-color 0.2s; }
+.edit-input:focus, .edit-textarea-field:focus { border-color:var(--water); }
+.edit-textarea-field { resize:vertical; min-height:80px; line-height:1.6; }
+.edit-actions { display:flex; gap:10px; margin-top:24px; justify-content:flex-end; }
+.edit-cancel { padding:9px 20px; border:1.5px solid var(--linen); border-radius:20px; background:none; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--clay); cursor:pointer; transition:all 0.18s; }
+.edit-cancel:hover { border-color:var(--stone); color:var(--bark); }
+.edit-save { padding:9px 24px; background:var(--water-dk); border:none; border-radius:20px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:white; cursor:pointer; transition:background 0.2s; }
+.edit-save:hover { background:var(--bark); }
+.edit-save:disabled { opacity:0.6; cursor:not-allowed; }
+
+/* ══════════════════════════════════════
+   BOTTOM NAV (mobile)
+══════════════════════════════════════ */
+#bottom-nav {
+  display: flex;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(250,247,242,0.95);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(200,187,168,0.35);
+  align-items: center;
+  justify-content: space-around;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+  z-index: 150;
+}
+.bnav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; cursor:pointer; color:var(--stone); transition:color 0.2s; padding:0 20px; }
+.bnav-btn.active { color:var(--water-dk); }
+.bnav-btn svg { width:22px; height:22px; }
+.bnav-label { font-size:10px; font-weight:400; letter-spacing:0.05em; }
+
+/* ══════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════ */
+.empty-state { text-align:center; padding:48px 0; font-family:'Cormorant Garamond',serif; font-size:20px; font-style:italic; color:var(--clay); line-height:1.6; }
+.empty-state span { display:block; font-family:'DM Sans',sans-serif; font-style:normal; font-size:14px; margin-top:8px; color:var(--stone); }
+
+/* ══════════════════════════════════════
+   DESKTOP
+══════════════════════════════════════ */
+@media (min-width: 700px) {
+  #bottom-nav { display: none; }
+  #sidebar { display: flex; }
+  body { overflow: hidden; }
+  .view { padding-bottom: 48px; }
+}
+
+@media (min-width: 900px) {
+  :root { --nav-h: 68px; --sidebar-w: 320px; }
+  #nav { padding: 0 32px; }
+  #nav img { height: 34px !important; }
+  .nav-avatar { width: 38px; height: 38px; }
+  .view { max-width: 680px; padding: 32px 32px 48px; }
+  .post-body { font-size: 16px; }
+  .post-author { font-size: 15px; }
+  .selah-btn { font-size: 15px; padding: 6px 18px; }
+  .action-btn { font-size: 14px; }
+  .scripture-card-text { font-size: 20px; }
+  .profile-name { font-size: 28px; }
+  .stat-value { font-size: 26px; }
+  .streak-value { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div id="nav">
+  <div class="nav-logo" onclick="navigate('feed')">
+    <img src="/logos/Still Waters Logo - Horizontal Color.png" alt="Still Waters" style="height:28px;width:auto;" />
+  </div>
+  <div class="nav-right">
+    <button class="nav-icon-btn" title="Notifications">
+      <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M9 2a5 5 0 00-5 5v3l-1.5 2h13L14 10V7a5 5 0 00-5-5z"/>
+        <path d="M7.5 14.5a1.5 1.5 0 003 0"/>
+      </svg>
+      <div class="nav-dot"></div>
+    </button>
+    <div class="nav-avatar" id="navAvatar" onclick="navigate('profile')">M</div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="shell">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+
+    <div class="sb-scripture">
+      <div class="sb-scripture-label" id="sb-verse-label">Today's verse</div>
+      <div class="sb-scripture-text" id="sb-verse-text">"He makes me lie down in green pastures. He leads me beside still waters."</div>
+      <div class="sb-scripture-ref" id="sb-verse-ref">Psalm 23:2 — ESV</div>
+    </div>
+
+    <div class="sb-nav">
+      <button class="sb-nav-item active" id="nav-feed" onclick="navigate('feed')">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+        Feed
+      </button>
+      <button class="sb-nav-item" id="nav-prayer" onclick="navigate('prayer')">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 2C11 2 5 8 5 12.5C5 15.985 7.686 18.8 11 18.8C14.314 18.8 17 15.985 17 12.5C17 8 11 2 11 2Z"/></svg>
+        Prayer
+      </button>
+      <button class="sb-nav-item" id="nav-profile" onclick="navigate('profile')">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="8" r="4"/><path d="M3 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>
+        Profile
+      </button>
+    </div>
+
+    <div class="sb-prayer-card">
+      <div class="sb-prayer-label">Prayer</div>
+      <div class="sb-prayer-stat">
+        <div class="sb-prayer-stat-label">Open requests</div>
+        <div class="sb-prayer-stat-value" id="sb-prayer-open">—</div>
+      </div>
+      <div class="sb-prayer-stat">
+        <div class="sb-prayer-stat-label">You're praying for</div>
+        <div class="sb-prayer-stat-value sage" id="sb-prayer-praying">—</div>
+      </div>
+    </div>
+
+    <div class="sb-verse">"Be still, and know that I am God."<br>— Psalm 46:10</div>
+
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ── FEED VIEW ── -->
+    <div class="view" id="view-feed">
+
+      <div class="scripture-card">
+        <div class="scripture-card-label" id="feed-verse-label">Today's verse · Psalm 23:2</div>
+        <div class="scripture-card-text" id="feed-verse-text">"He makes me lie down in green pastures. He leads me beside still waters."</div>
+        <div class="scripture-card-ref" id="feed-verse-ref">ESV · Today</div>
+      </div>
+
+      <div class="compose">
+        <div class="compose-top">
+          <div class="compose-avatar" id="composeAvatar">M</div>
+          <textarea class="compose-textarea" id="composeText" placeholder="What's on your heart today?" rows="2"></textarea>
+        </div>
+        <div class="compose-types">
+          <button class="type-btn active-thought" id="btn-thought" onclick="setPostType('thought')">
+            <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h9M2 7h6M2 10h4"/></svg>
+            Thought
+          </button>
+          <button class="type-btn" id="btn-prayer" onclick="setPostType('prayer')">
+            <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/></svg>
+            Prayer
+          </button>
+          <button class="type-btn" id="btn-scripture" onclick="setPostType('scripture')">
+            <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="1" width="7" height="10" rx="1"/><path d="M2 5h7M4.5 1v4"/></svg>
+            Scripture
+          </button>
+        </div>
+        <div class="scripture-picker" id="scripturePicker">
+          <input class="scripture-input" id="scriptureRef" type="text" placeholder="e.g. John 3:16 — type a reference…" />
+        </div>
+        <div class="compose-bottom">
+          <button class="post-btn" id="postBtn" onclick="submitPost()">Share</button>
+        </div>
+      </div>
+
+      <div class="feed-header">
+        <div class="feed-header-left">
+          <div class="feed-header-rule"></div>
+          <div class="feed-title">Your <em>feed</em></div>
+        </div>
+        <div class="feed-meta">Chronological</div>
+      </div>
+
+      <div class="feed" id="feed">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+
+    </div>
+
+    <!-- ── PRAYER VIEW ── -->
+    <div class="view" id="view-prayer">
+
+      <div class="prayer-header">
+        <div class="prayer-header-top">
+          <div class="prayer-header-rule"></div>
+          <div class="prayer-page-title">Prayer <em>requests</em></div>
+        </div>
+        <div class="prayer-page-sub">From your community · Chronological</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-stat"><div class="summary-value" id="p-stat-open">—</div><div class="summary-label">Open</div></div>
+        <div class="summary-stat"><div class="summary-value sage" id="p-stat-praying">—</div><div class="summary-label">You're praying</div></div>
+        <div class="summary-stat"><div class="summary-value" id="p-stat-answered">—</div><div class="summary-label">Answered</div></div>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setPrayerFilter('all', this)">All</button>
+        <button class="filter-tab" onclick="setPrayerFilter('praying', this)">Praying</button>
+        <button class="filter-tab" onclick="setPrayerFilter('answered', this)">Answered</button>
+      </div>
+
+      <div id="prayer-feed">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+
+    </div>
+
+    <!-- ── PROFILE VIEW ── -->
+    <div class="view" id="view-profile">
+
+      <div class="profile-header-card">
+        <div class="profile-cover">
+          <div class="cover-verse">"Be still, and know." — Psalm 46:10</div>
+        </div>
+        <div class="profile-identity">
+          <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+            <div class="profile-streak-ring"></div>
+            <div class="profile-avatar-img" id="profileAvatar">M</div>
+            <div class="avatar-edit-badge">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 7.5L3.5 5 7 1.5a1 1 0 011.5 1.5L5 6.5 2.5 9H1V7.5z" fill="white"/></svg>
+            </div>
+          </div>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="uploadAvatar(this)" />
+          <button class="profile-edit-btn" onclick="openEditModal()">
+            <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 10L9.5 2.5a1.5 1.5 0 012 2L6 11H2v-1z"/></svg>
+            Edit profile
+          </button>
+          <div class="profile-name" id="profileName">Loading…</div>
+          <div class="profile-handle" id="profileHandle">@…</div>
+          <div class="profile-bio" id="profileBio"></div>
+          <div class="profile-stats">
+            <div class="stat-item"><div class="stat-value" id="statPosts">—</div><div class="stat-label">Posts</div></div>
+            <div class="stat-item"><div class="stat-value" id="statFollowers">—</div><div class="stat-label">Followers</div></div>
+            <div class="stat-item"><div class="stat-value" id="statFollowing">—</div><div class="stat-label">Following</div></div>
+            <div class="stat-item"><div class="stat-value water" id="statSelahs">—</div><div class="stat-label">Selahs given</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="streak-card">
+        <div class="streak-flame">🔥</div>
+        <div>
+          <div class="streak-label">Reading streak</div>
+          <div class="streak-value">14 days</div>
+          <div class="streak-sub">Daily Scripture · Keep it going</div>
+          <div class="streak-dots">
+            <div class="streak-dot done"></div><div class="streak-dot done"></div>
+            <div class="streak-dot done"></div><div class="streak-dot done"></div>
+            <div class="streak-dot done"></div><div class="streak-dot done"></div>
+            <div class="streak-dot today"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faith-card">
+        <div class="faith-card-header">
+          <div class="faith-card-title">Faith <em>profile</em></div>
+          <button class="faith-edit-btn" onclick="openEditModal()">Edit</button>
+        </div>
+        <div class="faith-fields">
+          <div class="faith-field">
+            <div class="faith-icon icon-sage"><svg viewBox="0 0 15 15" fill="none" stroke="#5a7a55" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="1.5" width="8" height="11" rx="1"/><path d="M2 5.5h8M4.5 1.5v4"/></svg></div>
+            <div><div class="faith-field-label">Currently reading</div><div class="faith-field-value" id="currentlyReading">—</div></div>
+          </div>
+          <div class="faith-field">
+            <div class="faith-icon icon-linen"><svg viewBox="0 0 15 15" fill="none" stroke="#6B5D4F" stroke-width="1.5" stroke-linecap="round"><path d="M7.5 12C7.5 12 2.5 8.5 2.5 5.5C2.5 3.5 4 2 5.8 2C6.6 2 7.2 2.3 7.5 2.7C7.8 2.3 8.4 2 9.2 2C11 2 12.5 3.5 12.5 5.5C12.5 8.5 7.5 12 7.5 12Z" transform="scale(0.9) translate(0.5,0.5)"/></svg></div>
+            <div><div class="faith-field-label">Testimony</div><div class="faith-field-value" id="testimony">—</div></div>
+          </div>
+          <div class="faith-field">
+            <div class="faith-icon icon-water"><svg viewBox="0 0 15 15" fill="none" stroke="#4A7A8F" stroke-width="1.5" stroke-linecap="round"><circle cx="7.5" cy="5" r="3"/><path d="M2 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg></div>
+            <div><div class="faith-field-label">Spiritual gifts</div><div class="faith-field-value" id="spiritualGifts">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="posts-header">
+        <div class="posts-rule"></div>
+        <div class="posts-title">My <em>posts</em></div>
+      </div>
+      <div id="myPosts">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+
+    </div>
+
+  </div><!-- end content -->
+</div><!-- end shell -->
+
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+  <button class="bnav-btn active" id="bnav-feed" onclick="navigate('feed')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+    <span class="bnav-label">Feed</span>
+  </button>
+  <button class="bnav-btn" id="bnav-prayer" onclick="navigate('prayer')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 2C11 2 5 8 5 12.5C5 15.985 7.686 18.8 11 18.8C14.314 18.8 17 15.985 17 12.5C17 8 11 2 11 2Z"/></svg>
+    <span class="bnav-label">Prayer</span>
+  </button>
+  <button class="bnav-btn" id="bnav-profile" onclick="navigate('profile')">
+    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="8" r="4"/><path d="M3 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>
+    <span class="bnav-label">Profile</span>
+  </button>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="edit-overlay" id="editOverlay" onclick="closeEditIfOutside(event)">
+  <div class="edit-modal">
+    <div class="edit-modal-header">
+      <div class="edit-modal-title">Edit <em>profile</em></div>
+      <button class="edit-close" onclick="closeEditModal()">×</button>
+    </div>
+    <div class="edit-field"><label class="edit-label">Full name</label><input class="edit-input" id="editName" type="text" /></div>
+    <div class="edit-field"><label class="edit-label">Username</label><input class="edit-input" id="editUsername" type="text" /></div>
+    <div class="edit-field"><label class="edit-label">Bio</label><textarea class="edit-textarea-field" id="editBio"></textarea></div>
+    <div class="edit-field"><label class="edit-label">Currently reading</label><input class="edit-input" id="editReading" type="text" /></div>
+    <div class="edit-field"><label class="edit-label">Testimony</label><textarea class="edit-textarea-field" id="editTestimony"></textarea></div>
+    <div class="edit-field"><label class="edit-label">Spiritual gifts</label><input class="edit-input" id="editGifts" type="text" /></div>
+    <div class="edit-actions">
+      <button class="edit-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="edit-save" id="editSaveBtn" onclick="saveProfile()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://olhpiqxxofcwlkpvimug.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ';
+
+let currentUser = null;
+let currentProfile = null;
+let currentView = 'feed';
+let currentPostType = 'thought';
+let allPrayerPosts = [];
+let currentPrayerFilter = 'all';
+let feedLoaded = false;
+let prayerLoaded = false;
+let profileLoaded = false;
+
+// ── TOKEN ──
+function getToken() {
+  const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (sbKey) { try { const s = JSON.parse(localStorage.getItem(sbKey)); if (s?.access_token) return s.access_token; } catch {} }
+  for (const key of Object.keys(localStorage)) { try { const v = localStorage.getItem(key); if (!v||!v.startsWith('{')) continue; const p = JSON.parse(v); if (p?.access_token?.startsWith('eyJ')) return p.access_token; } catch {} }
+  for (const key of Object.keys(localStorage)) { const v = localStorage.getItem(key); if (v?.startsWith('eyJ') && !v.includes(' ')) return v; }
+  return null;
+}
+
+// ── AUTH ──
+async function init() {
+  const token = getToken();
+  if (!token) { window.location.href = '/auth'; return; }
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` } });
+  if (!res.ok) { window.location.href = '/auth'; return; }
+  currentUser = await res.json();
+
+  // Load profile for avatar etc
+  await loadCurrentProfile();
+
+  // Determine starting view from URL
+  const path = window.location.pathname;
+  const startView = path.includes('prayer') ? 'prayer' : path.includes('profile') ? 'profile' : 'feed';
+  navigate(startView, true);
+
+  // Load sidebar prayer counts
+  loadSidebarCounts();
+
+  // Register service worker
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+}
+
+// ── PROFILE LOAD ──
+async function loadCurrentProfile() {
+  const token = getToken();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}&select=*`, {
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+  });
+  if (!res.ok) return;
+  const profiles = await res.json();
+  currentProfile = profiles[0] || {};
+  updateUserUI();
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const name = currentProfile?.full_name || currentUser.user_metadata?.full_name || 'U';
+  const avatarUrl = currentProfile?.avatar_url || currentUser.user_metadata?.avatar_url;
+  const initial = name[0].toUpperCase();
+
+  // Nav avatar
+  const navAvatar = document.getElementById('navAvatar');
+  if (avatarUrl) { navAvatar.innerHTML = `<img src="${avatarUrl}" alt="${name}" />`; }
+  else { navAvatar.textContent = initial; }
+
+  // Compose avatar
+  const composeAvatar = document.getElementById('composeAvatar');
+  if (avatarUrl) { composeAvatar.innerHTML = `<img src="${avatarUrl}" alt="${name}" />`; }
+  else { composeAvatar.textContent = initial; }
+}
+
+// ── NAVIGATION ──
+function navigate(view, skipPush) {
+  currentView = view;
+
+  // Update views
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+
+  // Scroll content to top
+  document.getElementById('content').scrollTop = 0;
+
+  // Update sidebar nav
+  document.querySelectorAll('.sb-nav-item').forEach(b => b.classList.remove('active'));
+  const sbNav = document.getElementById('nav-' + view);
+  if (sbNav) sbNav.classList.add('active');
+
+  // Update bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  const bnav = document.getElementById('bnav-' + view);
+  if (bnav) bnav.classList.add('active');
+
+  // Update URL
+  if (!skipPush) history.pushState({ view }, '', '/' + view);
+
+  // Update title
+  const titles = { feed: 'Still Waters — Feed', prayer: 'Still Waters — Prayer', profile: 'Still Waters — Profile' };
+  document.title = titles[view] || 'Still Waters';
+
+  // Load data if needed
+  if (view === 'feed' && !feedLoaded) { loadFeed(); feedLoaded = true; }
+  if (view === 'prayer' && !prayerLoaded) { loadPrayer(); prayerLoaded = true; }
+  if (view === 'profile' && !profileLoaded) { renderProfile(); profileLoaded = true; }
+}
+
+// Handle browser back/forward
+window.addEventListener('popstate', e => {
+  if (e.state?.view) navigate(e.state.view, true);
+});
+
+// ── SIDEBAR COUNTS ──
+async function loadSidebarCounts() {
+  const token = getToken();
+  const [openRes, prayingRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&answered=eq.false&select=id`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    }),
+    fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    })
+  ]);
+  if (openRes.ok) { const d = await openRes.json(); document.getElementById('sb-prayer-open').textContent = d.length; }
+  if (prayingRes.ok) { const d = await prayingRes.json(); document.getElementById('sb-prayer-praying').textContent = d.length; }
+}
+
+// ── TIME AGO ──
+function getTimeAgo(d) {
+  const s = Math.floor((new Date() - new Date(d)) / 1000);
+  if (s < 60) return 'Just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  if (s < 604800) return Math.floor(s/86400) + 'd ago';
+  return new Date(d).toLocaleDateString();
+}
+
+// ══════════════════════════════════════
+// FEED
+// ══════════════════════════════════════
+async function loadFeed() {
+  const token = getToken();
+  const feed = document.getElementById('feed');
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(full_name,avatar_url,username),selahs(user_id)&order=created_at.desc&limit=30`,
+    { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
+  );
+  if (!res.ok) { feed.innerHTML = `<div class="empty-state">Could not load posts.<span>Please try refreshing.</span></div>`; return; }
+  const posts = await res.json();
+  renderFeedPosts(posts);
+}
+
+function renderFeedPosts(posts) {
+  const feed = document.getElementById('feed');
+  if (!posts.length) {
+    feed.innerHTML = `<div class="empty-state">Be the first to share something.<span>Your feed is quiet — for now.</span></div>`;
+    return;
+  }
+  feed.innerHTML = posts.map(post => {
+    const p = post.profile || {};
+    const name = p.full_name || 'Someone';
+    const initial = name[0].toUpperCase();
+    const avatarUrl = p.avatar_url;
+    const selahCount = post.selahs ? post.selahs.length : 0;
+    const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
+    const avatarHtml = avatarUrl ? `<div class="post-avatar"><img src="${avatarUrl}" alt="${name}" /></div>` : `<div class="post-avatar">${initial}</div>`;
+    const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
+    return `
+      <div class="post-card ${post.type === 'prayer' ? 'prayer-card' : ''}">
+        <div class="post-meta">
+          ${avatarHtml}
+          <div><div class="post-author">${name}</div><div class="post-time">${getTimeAgo(post.created_at)}</div></div>
+          <div class="post-type-tag tag-${post.type}">${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</div>
+        </div>
+        <div class="post-body">${post.body}</div>
+        ${scriptureBlock}
+        <div class="post-actions">
+          <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','feed')">
+            <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
+          </button>
+          <button class="action-btn">${post.type==='prayer'?'Pray':'Share'}</button>
+          <button class="action-btn">Comment</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function setPostType(type) {
+  currentPostType = type;
+  ['thought','prayer','scripture'].forEach(t => {
+    const b = document.getElementById('btn-' + t);
+    b.className = 'type-btn';
+    if (t === type) b.classList.add('active-' + t);
+  });
+  document.getElementById('scripturePicker').classList.toggle('visible', type === 'scripture');
+}
+
+async function submitPost() {
+  const body = document.getElementById('composeText').value.trim();
+  if (!body) return;
+  const token = getToken();
+  const btn = document.getElementById('postBtn');
+  btn.textContent = 'Posting…'; btn.disabled = true;
+  const scriptureRef = document.getElementById('scriptureRef')?.value?.trim() || null;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=representation' },
+    body: JSON.stringify({ user_id: currentUser.id, type: currentPostType, body, scripture_ref: scriptureRef || null })
+  });
+  if (res.ok) {
+    document.getElementById('composeText').value = '';
+    document.getElementById('composeText').style.height = 'auto';
+    if (scriptureRef) document.getElementById('scriptureRef').value = '';
+    setPostType('thought');
+    feedLoaded = false;
+    loadFeed();
+    feedLoaded = true;
+    if (currentPostType === 'prayer') { prayerLoaded = false; loadSidebarCounts(); }
+  } else { alert('Something went wrong. Please try again.'); }
+  btn.textContent = 'Share'; btn.disabled = false;
+}
+
+document.getElementById('composeText').addEventListener('input', function() {
+  this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';
+});
+
+// ══════════════════════════════════════
+// PRAYER
+// ══════════════════════════════════════
+async function loadPrayer() {
+  const token = getToken();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&select=*,profile:profiles(full_name,avatar_url),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc&limit=50`,
+    { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
+  );
+  if (!res.ok) { document.getElementById('prayer-feed').innerHTML = `<div class="empty-state">Could not load prayer requests.</div>`; return; }
+  allPrayerPosts = await res.json();
+  updatePrayerSummary();
+  renderPrayerFeed();
+}
+
+function updatePrayerSummary() {
+  document.getElementById('p-stat-open').textContent = allPrayerPosts.filter(p => !p.answered).length;
+  document.getElementById('p-stat-answered').textContent = allPrayerPosts.filter(p => p.answered).length;
+  document.getElementById('p-stat-praying').textContent = allPrayerPosts.filter(p => p.selahs?.some(s => s.user_id === currentUser.id)).length;
+}
+
+function setPrayerFilter(filter, btn) {
+  currentPrayerFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderPrayerFeed();
+}
+
+function renderPrayerFeed() {
+  const feed = document.getElementById('prayer-feed');
+  let posts = allPrayerPosts;
+  if (currentPrayerFilter === 'praying') posts = allPrayerPosts.filter(p => p.selahs?.some(s => s.user_id === currentUser.id));
+  if (currentPrayerFilter === 'answered') posts = allPrayerPosts.filter(p => p.answered);
+
+  if (!posts.length) {
+    const msgs = { all:'No prayer requests yet.<span>Post a prayer request from the feed.</span>', praying:'You haven\'t Selah\'d any requests yet.', answered:'No answered prayers yet.<span>Keep praying.</span>' };
+    feed.innerHTML = `<div class="empty-state">${msgs[currentPrayerFilter]}</div>`;
+    return;
+  }
+
+  feed.innerHTML = posts.map(post => {
+    const p = post.profile || {};
+    const name = p.full_name || 'Someone';
+    const initial = name[0].toUpperCase();
+    const avatarUrl = p.avatar_url;
+    const selahCount = post.selahs ? post.selahs.length : 0;
+    const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
+    const writtenPrayers = post.prayers || [];
+    const avatarHtml = avatarUrl ? `<div class="prayer-avatar"><img src="${avatarUrl}" alt="${name}" /></div>` : `<div class="prayer-avatar">${initial}</div>`;
+    const badgeHtml = post.answered ? `<div class="answered-badge">✓ Answered</div>` : `<div class="praying-badge"><div class="praying-dot"></div>${selahCount} praying</div>`;
+    const writtenHtml = writtenPrayers.length ? `
+      <div class="written-prayers">
+        <div class="written-prayers-label">Prayers written · ${writtenPrayers.length}</div>
+        ${writtenPrayers.map(wp => {
+          const wpp = wp.profile || {};
+          const wpn = wpp.full_name || 'Someone';
+          const wpa = wpp.avatar_url ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>` : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
+          return `<div class="written-prayer-item">${wpa}<div class="written-prayer-bubble"><div class="written-prayer-name">${wpn}</div><div class="written-prayer-text">${wp.body}</div></div></div>`;
+        }).join('')}
+      </div>` : '';
+
+    return `
+      <div class="prayer-card-wrap ${post.answered?'answered':''}" id="pc-${post.id}">
+        <div class="prayer-meta">
+          ${avatarHtml}
+          <div><div class="prayer-author">${name}</div><div class="prayer-time">${getTimeAgo(post.created_at)}</div></div>
+          ${badgeHtml}
+        </div>
+        <div class="prayer-body">${post.body}</div>
+        <div class="prayer-actions">
+          <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','prayer')">
+            <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
+          </button>
+          ${!post.answered ? `<button class="pray-btn ${hasSelahed?'active':''}" onclick="togglePrayBtn(this,'${post.id}')">
+            <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/></svg>
+            ${hasSelahed?'Praying':'Pray'}
+          </button>` : ''}
+          <button class="write-prayer-btn" onclick="toggleWritePrayer('${post.id}')">Write a prayer</button>
+        </div>
+        <div class="prayer-response-box" id="prb-${post.id}">
+          <div class="prayer-response-label">Pray for ${name.split(' ')[0]}</div>
+          <textarea class="prayer-textarea" id="prt-${post.id}" placeholder="Lord, I lift ${name.split(' ')[0]} up to you…" rows="3"></textarea>
+          <div class="prayer-response-actions">
+            <button class="prayer-cancel-btn" onclick="toggleWritePrayer('${post.id}')">Cancel</button>
+            <button class="prayer-submit-btn" onclick="submitWrittenPrayer('${post.id}')">Send prayer</button>
+          </div>
+        </div>
+        ${writtenHtml}
+      </div>`;
+  }).join('');
+}
+
+function toggleWritePrayer(postId) {
+  const box = document.getElementById('prb-' + postId);
+  const visible = box.classList.toggle('visible');
+  if (visible) document.getElementById('prt-' + postId).focus();
+}
+
+function togglePrayBtn(btn, postId) {
+  const selahBtn = btn.closest('.prayer-actions').querySelector('.selah-btn');
+  toggleSelah(selahBtn, postId, 'prayer');
+  btn.classList.toggle('active');
+  btn.lastChild.textContent = btn.classList.contains('active') ? ' Praying' : ' Pray';
+}
+
+async function submitWrittenPrayer(postId) {
+  const token = getToken();
+  const textarea = document.getElementById('prt-' + postId);
+  const body = textarea.value.trim();
+  if (!body) return;
+  const btn = document.querySelector(`#prb-${postId} .prayer-submit-btn`);
+  btn.textContent = 'Sending…'; btn.disabled = true;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/prayers`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ user_id: currentUser.id, post_id: postId, body })
+  });
+  if (res.ok) { textarea.value = ''; toggleWritePrayer(postId); prayerLoaded = false; loadPrayer(); prayerLoaded = true; }
+  else { alert('Something went wrong.'); }
+  btn.textContent = 'Send prayer'; btn.disabled = false;
+}
+
+// ══════════════════════════════════════
+// SHARED SELAH
+// ══════════════════════════════════════
+async function toggleSelah(btn, postId, context) {
+  const token = getToken();
+  const countEl = btn.querySelector('.selah-count');
+  const current = parseInt(countEl.textContent.replace(/\D/g,''));
+  const isActive = btn.classList.contains('active');
+  btn.classList.toggle('active');
+  countEl.textContent = '· ' + (isActive ? current - 1 : current + 1);
+
+  if (isActive) {
+    await fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&post_id=eq.${postId}`, {
+      method: 'DELETE', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+    });
+  } else {
+    await fetch(`${SUPABASE_URL}/rest/v1/selahs`, {
+      method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
+    });
+  }
+
+  // Update sidebar counts
+  loadSidebarCounts();
+  if (context === 'prayer') updatePrayerSummary();
+}
+
+// ══════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════
+async function renderProfile() {
+  const token = getToken();
+
+  const [postsRes, selahsRes, followersRes, followingRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id)&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
+    fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
+    fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
+    fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } })
+  ]);
+
+  const posts     = postsRes.ok     ? await postsRes.json()     : [];
+  const selahs    = selahsRes.ok    ? await selahsRes.json()    : [];
+  const followers = followersRes.ok ? await followersRes.json() : [];
+  const following = followingRes.ok ? await followingRes.json() : [];
+
+  // Update profile UI
+  const name = currentProfile?.full_name || currentUser.user_metadata?.full_name || 'Your Name';
+  const username = currentProfile?.username || 'username';
+  const bio = currentProfile?.bio || '';
+  const avatarUrl = currentProfile?.avatar_url || currentUser.user_metadata?.avatar_url;
+  const initial = name[0].toUpperCase();
+
+  const profileAvatar = document.getElementById('profileAvatar');
+  if (avatarUrl) { profileAvatar.innerHTML = `<img src="${avatarUrl}" alt="${name}" />`; }
+  else { profileAvatar.textContent = initial; }
+
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('profileHandle').textContent = '@' + username;
+  document.getElementById('profileBio').textContent = bio || 'Add a bio to tell people about yourself.';
+  document.getElementById('statPosts').textContent = posts.length;
+  document.getElementById('statFollowers').textContent = followers.length;
+  document.getElementById('statFollowing').textContent = following.length;
+  document.getElementById('statSelahs').textContent = selahs.length >= 1000 ? (selahs.length/1000).toFixed(1)+'k' : selahs.length;
+
+  if (currentProfile?.currently_reading) document.getElementById('currentlyReading').textContent = currentProfile.currently_reading;
+  if (currentProfile?.testimony) document.getElementById('testimony').textContent = currentProfile.testimony;
+  if (currentProfile?.spiritual_gifts) document.getElementById('spiritualGifts').textContent = currentProfile.spiritual_gifts;
+
+  // Render my posts
+  const myPosts = document.getElementById('myPosts');
+  if (!posts.length) { myPosts.innerHTML = `<div class="empty-state" style="font-size:16px;">Nothing shared yet.</div>`; return; }
+
+  myPosts.innerHTML = posts.map(post => {
+    const selahCount = post.selahs ? post.selahs.length : 0;
+    const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
+    const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
+    return `
+      <div class="post-card ${post.type==='prayer'?'prayer-card':''}">
+        <div class="post-meta">
+          <div class="post-time">${getTimeAgo(post.created_at)}</div>
+          <div class="post-type-tag tag-${post.type}">${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</div>
+        </div>
+        <div class="post-body">${post.body}</div>
+        ${scriptureBlock}
+        <div class="post-actions">
+          <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','profile')">
+            <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
+          </button>
+          <button class="action-btn">${post.type==='prayer'?'Pray':'Share'}</button>
+          <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function deletePost(postId, btn) {
+  if (!confirm('Delete this post?')) return;
+  const token = getToken();
+  const card = btn.closest('.post-card');
+  card.style.opacity = '0.5';
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&user_id=eq.${currentUser.id}`, {
+    method: 'DELETE', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+  });
+  if (res.ok) {
+    card.remove();
+    const count = parseInt(document.getElementById('statPosts').textContent);
+    document.getElementById('statPosts').textContent = Math.max(0, count - 1);
+    feedLoaded = false;
+  } else { card.style.opacity = '1'; alert('Could not delete. Please try again.'); }
+}
+
+// ── AVATAR UPLOAD ──
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const token = getToken();
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = `<img src="${e.target.result}" alt="avatar" />`;
+    document.getElementById('profileAvatar').innerHTML = img;
+    document.getElementById('navAvatar').innerHTML = img;
+    document.getElementById('composeAvatar').innerHTML = img;
+  };
+  reader.readAsDataURL(file);
+  const ext = file.type === 'image/png' ? 'png' : 'jpg';
+  const fileName = `${currentUser.id}.${ext}`;
+  const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`, {
+    method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file
+  });
+  if (!uploadRes.ok) return;
+  const avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
+  await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+    method: 'PATCH', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ avatar_url: avatarUrl })
+  });
+  if (currentProfile) currentProfile.avatar_url = avatarUrl;
+}
+
+// ── EDIT PROFILE ──
+function openEditModal() {
+  document.getElementById('editName').value = currentProfile?.full_name || '';
+  document.getElementById('editUsername').value = currentProfile?.username || '';
+  document.getElementById('editBio').value = currentProfile?.bio || '';
+  document.getElementById('editReading').value = currentProfile?.currently_reading || '';
+  document.getElementById('editTestimony').value = currentProfile?.testimony || '';
+  document.getElementById('editGifts').value = currentProfile?.spiritual_gifts || '';
+  document.getElementById('editOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+  document.getElementById('editOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeEditIfOutside(e) {
+  if (e.target === document.getElementById('editOverlay')) closeEditModal();
+}
+
+async function saveProfile() {
+  const token = getToken();
+  const btn = document.getElementById('editSaveBtn');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  const updates = {
+    full_name:         document.getElementById('editName').value.trim(),
+    username:          document.getElementById('editUsername').value.trim().toLowerCase().replace(/[^a-z0-9]/g,''),
+    bio:               document.getElementById('editBio').value.trim(),
+    currently_reading: document.getElementById('editReading').value.trim(),
+    testimony:         document.getElementById('editTestimony').value.trim(),
+    spiritual_gifts:   document.getElementById('editGifts').value.trim(),
+  };
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(updates)
+  });
+
+  if (res.ok) {
+    Object.assign(currentProfile, updates);
+    if (updates.full_name) document.getElementById('profileName').textContent = updates.full_name;
+    if (updates.username)  document.getElementById('profileHandle').textContent = '@' + updates.username;
+    if (updates.bio)       document.getElementById('profileBio').textContent = updates.bio;
+    if (updates.currently_reading) document.getElementById('currentlyReading').textContent = updates.currently_reading;
+    if (updates.testimony)         document.getElementById('testimony').textContent = updates.testimony;
+    if (updates.spiritual_gifts)   document.getElementById('spiritualGifts').textContent = updates.spiritual_gifts;
+    closeEditModal();
+  } else { alert('Something went wrong. Please try again.'); }
+
+  btn.textContent = 'Save changes'; btn.disabled = false;
+}
+
+// ── START ──
+init();
+</script>
+
+</body>
+</html>
