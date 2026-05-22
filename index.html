@@ -107,11 +107,14 @@ nav {
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--clay);
-  border: 1px solid var(--stone);
+  color: var(--deep);
+  border: 1px solid var(--deep);
   padding: 6px 14px;
   border-radius: 20px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
 }
+.nav-pill:hover { background: var(--deep); color: var(--cream); }
 
 /* ── HERO ── */
 .hero {
@@ -212,7 +215,11 @@ nav {
   border: 1px solid var(--water-lt);
   padding: 10px 24px;
   border-radius: 40px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
 }
+.coming-soon-badge:hover { background: var(--water-lt); border-color: var(--water); }
 .coming-soon-badge::before {
   content: '';
   width: 6px; height: 6px;
@@ -611,7 +618,7 @@ footer {
   <a href="#" class="nav-logo">
     <img src="/logos/Still Waters Logo - Horizontal Color.png" alt="Still Waters" style="height: 38px; width: auto;" />
   </a>
-  <div class="nav-pill">Coming Soon</div>
+  <a href="/auth" class="nav-pill">Sign in</a>
 </nav>
 
 <!-- HERO -->
@@ -635,7 +642,7 @@ footer {
     Most social media is white water rapids — noise, outrage, comparison, scroll. Still Waters is the other thing. A community where your faith isn't a niche interest. It's just home.
   </p>
 
-  <div class="coming-soon-badge anim-5">Something is coming</div>
+  <a href="/auth" class="coming-soon-badge anim-5">Join Still Waters →</a>
 
   <p class="hero-verse anim-6">"He leads me beside still waters." — Psalm 23:2</p>
 </section>
@@ -747,7 +754,7 @@ footer {
   <div class="footer-logo">
     <img src="/logos/Still Waters Logo - Horizontal Light.png" alt="Still Waters" style="height: 24px; width: auto;" />
   </div>
-  <span class="footer-note">© 2026 · Coming Soon</span>
+  <span class="footer-note">© 2026 Still Waters</span>
   <span class="footer-verse">"He leads me beside still waters." — Psalm 23:2</span>
 </footer>
 
