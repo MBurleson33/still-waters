@@ -293,6 +293,66 @@ body {
 .selah-count { font-family:'DM Sans',sans-serif; font-size:12px; }
 .action-btn { font-size:13px; color:var(--clay); background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:300; padding:5px 2px; transition:color 0.18s; }
 .action-btn:hover { color:var(--bark); }
+.action-btn.active { color:var(--water-dk); font-weight:500; }
+
+/* ══════════════════════════════════════
+   COMMENT THREAD
+══════════════════════════════════════ */
+.comment-thread {
+  display: none;
+  border-top: 1px solid var(--linen);
+  padding: 14px 0 4px;
+}
+.comment-thread.open { display: block; }
+.comment-item {
+  display: flex; gap: 10px; margin-bottom: 12px;
+}
+.comment-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--linen);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 12px; color: var(--bark);
+  flex-shrink: 0; margin-top: 2px; overflow: hidden;
+}
+.comment-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.comment-bubble {
+  background: var(--cream); border-radius: 0 12px 12px 12px;
+  padding: 8px 12px; flex: 1;
+}
+.comment-author { font-size: 12px; font-weight: 500; color: var(--deep); margin-bottom: 2px; }
+.comment-body { font-size: 14px; color: var(--bark); line-height: 1.5; font-weight: 300; }
+.comment-time { font-size: 11px; color: var(--stone); margin-top: 3px; }
+.comment-delete { font-size: 11px; color: var(--stone); background: none; border: none; cursor: pointer; padding: 0; margin-left: 6px; transition: color 0.15s; }
+.comment-delete:hover { color: #c0392b; }
+.comment-input-row {
+  display: flex; gap: 8px; align-items: flex-end;
+  padding-top: 8px;
+}
+.comment-input-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--water-lt);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 12px; color: var(--water-dk);
+  flex-shrink: 0; overflow: hidden;
+}
+.comment-input-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.comment-input {
+  flex: 1; border: 1.5px solid var(--linen); border-radius: 20px;
+  padding: 7px 14px; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--deep); background: var(--cream);
+  outline: none; resize: none; line-height: 1.4; min-height: 34px;
+  max-height: 100px; transition: border-color 0.2s;
+}
+.comment-input:focus { border-color: var(--water); }
+.comment-input::placeholder { color: var(--stone); }
+.comment-send {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--water-dk); border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: background 0.2s;
+}
+.comment-send:hover { background: var(--bark); }
+.comment-send svg { width: 14px; height: 14px; }
 
 /* ══════════════════════════════════════
    FEED VIEW
@@ -1075,6 +1135,9 @@ async function loadFeed() {
     </div>` : '';
 
   renderFeedPosts(posts, discoverBanner);
+
+  // Load comment counts for all posts
+  posts.forEach(post => updateCommentCount(post.id));
 }
 
 function renderFeedPosts(posts, bannerHtml = '') {
@@ -1100,7 +1163,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
     const followBtn = !isOwnPost ? `<button class="follow-pill ${isFollowing?'following':''}" onclick="toggleFollow(this,'${userId}','${name}')">${isFollowing?'Following':'Follow'}</button>` : '';
 
     return `
-      <div class="post-card ${post.type === 'prayer' ? 'prayer-card' : ''}">
+      <div class="post-card ${post.type === 'prayer' ? 'prayer-card' : ''}" id="post-${post.id}">
         <div class="post-meta">
           ${avatarHtml}
           <div>
@@ -1113,11 +1176,27 @@ function renderFeedPosts(posts, bannerHtml = '') {
         <div class="post-body">${post.body}</div>
         ${scriptureBlock}
         <div class="post-actions">
-          <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','feed')">
+          ${!isOwnPost ? `<button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','feed')">
             <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
-          </button>
+          </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
           <button class="action-btn">${post.type==='prayer'?'Pray':'Share'}</button>
-          <button class="action-btn">Comment</button>
+          <button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>
+        </div>
+        <div class="comment-thread" id="comments-${post.id}">
+          <div class="comment-list" id="comment-list-${post.id}">
+            <div style="text-align:center;padding:12px 0;color:var(--clay);font-size:13px;">Loading…</div>
+          </div>
+          <div class="comment-input-row">
+            <div class="comment-input-avatar" id="cAvatar-${post.id}">${currentProfile?.avatar_url ? `<img src="${currentProfile.avatar_url}" alt="me" />` : (currentProfile?.full_name||'M')[0].toUpperCase()}</div>
+            <textarea class="comment-input" id="cinput-${post.id}" placeholder="Write a comment…" rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitComment('${post.id}')}"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <button class="comment-send" onclick="submitComment('${post.id}')">
+              <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 1L6 8M13 1L9 13 6 8 1 5l12-4z"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -1377,7 +1456,7 @@ async function renderProfile() {
     const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
     return `
-      <div class="post-card ${post.type==='prayer'?'prayer-card':''}">
+      <div class="post-card ${post.type==='prayer'?'prayer-card':''}" id="post-${post.id}">
         <div class="post-meta">
           <div class="post-time">${getTimeAgo(post.created_at)}</div>
           <div class="post-type-tag tag-${post.type}">${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</div>
@@ -1389,7 +1468,24 @@ async function renderProfile() {
             <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
           </button>
           <button class="action-btn">${post.type==='prayer'?'Pray':'Share'}</button>
+          <button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>
           <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
+        </div>
+        <div class="comment-thread" id="comments-${post.id}">
+          <div class="comment-list" id="comment-list-${post.id}">
+            <div style="text-align:center;padding:12px 0;color:var(--clay);font-size:13px;">Loading…</div>
+          </div>
+          <div class="comment-input-row">
+            <div class="comment-input-avatar" id="cAvatar-${post.id}">${currentProfile?.avatar_url ? `<img src="${currentProfile.avatar_url}" alt="me" />` : (currentProfile?.full_name||'M')[0].toUpperCase()}</div>
+            <textarea class="comment-input" id="cinput-${post.id}" placeholder="Write a comment…" rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitComment('${post.id}')}"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <button class="comment-send" onclick="submitComment('${post.id}')">
+              <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 1L6 8M13 1L9 13 6 8 1 5l12-4z"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -1771,6 +1867,128 @@ async function createNotification(userId, type, postId = null) {
     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
     body: JSON.stringify({ user_id: userId, actor_id: currentUser.id, type, post_id: postId })
   });
+}
+
+// ══════════════════════════════════════
+// COMMENTS
+// ══════════════════════════════════════
+async function toggleComments(btn, postId) {
+  const thread = document.getElementById('comments-' + postId);
+  const isOpen = thread.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+
+  if (isOpen) {
+    await loadComments(postId);
+    document.getElementById('cinput-' + postId)?.focus();
+  }
+}
+
+async function loadComments(postId) {
+  const token = getToken();
+  const list = document.getElementById('comment-list-' + postId);
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/comments?post_id=eq.${postId}&select=*,profile:profiles(id,full_name,avatar_url)&order=created_at.asc`,
+    { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
+  );
+
+  if (!res.ok) { list.innerHTML = ''; return; }
+  const comments = await res.json();
+
+  if (!comments.length) {
+    list.innerHTML = `<div style="text-align:center;padding:12px 0;color:var(--clay);font-size:13px;font-style:italic;">No comments yet — be the first.</div>`;
+    return;
+  }
+
+  list.innerHTML = comments.map(c => {
+    const p = c.profile || {};
+    const name = p.full_name || 'Someone';
+    const initial = name[0].toUpperCase();
+    const avatarHtml = p.avatar_url
+      ? `<div class="comment-avatar"><img src="${p.avatar_url}" alt="${name}" /></div>`
+      : `<div class="comment-avatar">${initial}</div>`;
+    const isOwn = p.id === currentUser.id;
+
+    return `
+      <div class="comment-item" id="comment-${c.id}">
+        ${avatarHtml}
+        <div class="comment-bubble" style="flex:1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="comment-author">${name}</div>
+            ${isOwn ? `<button class="comment-delete" onclick="deleteComment('${c.id}','${postId}')">✕</button>` : ''}
+          </div>
+          <div class="comment-body">${c.body}</div>
+          <div class="comment-time">${getTimeAgo(c.created_at)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function submitComment(postId) {
+  const token = getToken();
+  const input = document.getElementById('cinput-' + postId);
+  const body = input.value.trim();
+  if (!body) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json', 'Content-Profile': 'stillwaters',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ post_id: postId, user_id: currentUser.id, body })
+  });
+
+  if (res.ok) {
+    await loadComments(postId);
+    // Update comment button label
+    updateCommentCount(postId);
+    // Notify post owner
+    const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    });
+    if (postRes.ok) {
+      const posts = await postRes.json();
+      if (posts[0]) createNotification(posts[0].user_id, 'comment', postId);
+    }
+  }
+}
+
+async function deleteComment(commentId, postId) {
+  const token = getToken();
+  const el = document.getElementById('comment-' + commentId);
+  if (el) el.style.opacity = '0.5';
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/comments?id=eq.${commentId}&user_id=eq.${currentUser.id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+  });
+  if (res.ok) {
+    if (el) el.remove();
+    updateCommentCount(postId);
+  } else {
+    if (el) el.style.opacity = '1';
+  }
+}
+
+async function updateCommentCount(postId) {
+  const token = getToken();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/comments?post_id=eq.${postId}&select=id`,
+    { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
+  );
+  if (!res.ok) return;
+  const comments = await res.json();
+  const count = comments.length;
+  // Update button label
+  const post = document.getElementById('post-' + postId);
+  if (post) {
+    const btn = post.querySelector('.comment-toggle');
+    if (btn) btn.textContent = count > 0 ? `Comment · ${count}` : 'Comment';
+  }
 }
 
 // ── START ──
