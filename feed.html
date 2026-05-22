@@ -110,36 +110,40 @@ nav {
 }
 
 /* ── SIDEBAR ── */
-.sidebar {
-  display: none;
-}
+.sidebar { display: none; }
 
 /* ── DESKTOP TWO COLUMN + SCALING ── */
 @media (min-width: 900px) {
   body { font-size: 16px; }
-
   nav { height: 68px; padding: 0 48px; }
+  nav img { height: 36px !important; }
+  .nav-avatar { width: 40px; height: 40px; font-size: 16px; }
+  .nav-icon-btn { width: 40px; height: 40px; }
 
-  .layout {
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 40px;
-    align-items: start;
-    padding: 88px 48px 48px;
-    max-width: 1380px;
-  }
-  .feed-col { min-width: 0; }
+  /* Fixed sidebar shell */
   .sidebar {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    position: sticky;
-    top: 80px;
+    position: fixed;
+    top: 68px;
+    right: 0;
+    width: 340px;
+    height: calc(100vh - 68px);
+    padding: 32px 40px 40px 24px;
+    overflow-y: auto;
+    background: var(--sand);
+    border-left: 1px solid rgba(200,187,168,0.2);
   }
 
-  /* Nav */
-  nav img { height: 36px !important; }
-  .nav-avatar { width: 40px; height: 40px; font-size: 16px; }
-  .nav-icon-btn { width: 40px; height: 40px; }
+  /* Main layout shifts right to make room */
+  .layout {
+    display: block;
+    max-width: calc(100% - 340px);
+    margin: 0 auto 0 0;
+    padding: 88px 40px 48px 48px;
+  }
+  .feed-col { min-width: 0; max-width: 680px; margin: 0 auto; }
 
   /* Scripture card */
   .scripture-card { padding: 28px 32px; margin-bottom: 24px; }
