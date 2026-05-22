@@ -100,12 +100,9 @@ nav {
 
 /* ── LAYOUT ── */
 .layout {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 72px 16px 100px;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
 }
 
 /* ── SIDEBAR ── */
@@ -516,21 +513,24 @@ nav {
 @media (min-width: 640px) {
   .bottom-nav { display: none; }
   .layout {
-    padding-bottom: 40px;
-    grid-template-columns: minmax(0, 1fr) 300px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
     gap: 32px;
-    align-items: start;
-    padding: 88px 32px 48px;
-    max-width: 1200px;
+    padding: 88px 40px 48px;
   }
-  .profile-col { min-width: 0; }
+  .profile-col {
+    flex: 1;
+    min-width: 0;
+  }
   .sidebar {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    width: 300px;
+    flex-shrink: 0;
     position: sticky;
     top: 88px;
-    margin-top: 56px;
   }
 }
 
