@@ -867,6 +867,42 @@ input, textarea, select {
 .person-bio { font-size: 13px; color: var(--bark); margin-top: 3px; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 
 /* ══════════════════════════════════════
+   CUSTOM CONFIRM / ALERT MODAL
+══════════════════════════════════════ */
+#sw-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(61,50,42,0.5); z-index: 9999;
+  align-items: center; justify-content: center; padding: 24px;
+}
+#sw-modal-overlay.open { display: flex; }
+#sw-modal {
+  background: var(--white); border-radius: 20px;
+  padding: 28px 28px 24px; width: 100%; max-width: 360px;
+  box-shadow: 0 8px 40px rgba(61,50,42,0.2);
+  animation: fadeUp 0.2s ease;
+}
+#sw-modal-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 20px;
+  font-weight: 400; color: var(--deep); margin-bottom: 8px;
+}
+#sw-modal-body {
+  font-size: 14px; font-weight: 300; color: var(--bark);
+  line-height: 1.6; margin-bottom: 20px;
+}
+#sw-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.sw-modal-cancel {
+  padding: 9px 20px; border: 1.5px solid var(--linen); border-radius: 20px;
+  background: none; font-family: 'DM Sans', sans-serif; font-size: 13px;
+  color: var(--clay); cursor: pointer; transition: all 0.18s;
+}
+.sw-modal-cancel:hover { border-color: var(--stone); color: var(--bark); }
+.sw-modal-confirm {
+  padding: 9px 20px; border: none; border-radius: 20px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px;
+  font-weight: 500; color: white; cursor: pointer; transition: background 0.2s;
+}
+
+/* ══════════════════════════════════════
    SEARCH MODAL
 ══════════════════════════════════════ */
 #search-modal-overlay {
@@ -1624,6 +1660,15 @@ input, textarea, select {
   </div>
 </div>
 
+<!-- CUSTOM CONFIRM/ALERT MODAL -->
+<div id="sw-modal-overlay">
+  <div id="sw-modal">
+    <div id="sw-modal-title"></div>
+    <div id="sw-modal-body"></div>
+    <div id="sw-modal-actions"></div>
+  </div>
+</div>
+
 <!-- SEARCH MODAL -->
 <div id="search-modal-overlay" onclick="closeSearchIfOutside(event)">
   <div id="search-modal">
@@ -1895,7 +1940,7 @@ async function loadSidebarCounts() {
     fetch(`${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&answered=eq.false&select=id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
-    fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`, {
+    fetch(`${SUPABASE_URL}/rest/v1/prays?user_id=eq.${currentUser.id}&select=id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     })
   ]);
@@ -2056,7 +2101,7 @@ async function submitPost() {
     loadFeed();
     feedLoaded = true;
     if (currentPostType === 'prayer') { prayerLoaded = false; loadSidebarCounts(); }
-  } else { alert('Something went wrong. Please try again.'); }
+  } else { swAlert('Something went wrong', 'Please try again.'); }
   btn.textContent = 'Share'; btn.disabled = false;
 }
 
@@ -2070,7 +2115,7 @@ document.getElementById('composeText').addEventListener('input', function() {
 async function loadPrayer() {
   const token = getToken();
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&select=*,profile:profiles(full_name,avatar_url),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc&limit=50`,
+    `${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&select=*,profile:profiles(full_name,avatar_url),prays(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc&limit=50`,
     { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
   );
   if (!res.ok) { document.getElementById('prayer-feed').innerHTML = `<div class="empty-state">Could not load prayer requests.</div>`; return; }
@@ -2082,7 +2127,7 @@ async function loadPrayer() {
 function updatePrayerSummary() {
   document.getElementById('p-stat-open').textContent = allPrayerPosts.filter(p => !p.answered).length;
   document.getElementById('p-stat-answered').textContent = allPrayerPosts.filter(p => p.answered).length;
-  document.getElementById('p-stat-praying').textContent = allPrayerPosts.filter(p => p.selahs?.some(s => s.user_id === currentUser.id)).length;
+  document.getElementById('p-stat-praying').textContent = allPrayerPosts.filter(p => p.prays?.some(s => s.user_id === currentUser.id)).length;
 }
 
 function setPrayerFilter(filter, btn) {
@@ -2095,11 +2140,15 @@ function setPrayerFilter(filter, btn) {
 function renderPrayerFeed() {
   const feed = document.getElementById('prayer-feed');
   let posts = allPrayerPosts;
-  if (currentPrayerFilter === 'praying') posts = allPrayerPosts.filter(p => p.selahs?.some(s => s.user_id === currentUser.id));
+  if (currentPrayerFilter === 'praying') posts = allPrayerPosts.filter(p => p.prays?.some(s => s.user_id === currentUser.id));
   if (currentPrayerFilter === 'answered') posts = allPrayerPosts.filter(p => p.answered);
 
   if (!posts.length) {
-    const msgs = { all:'No prayer requests yet.<span>Post a prayer request from the feed.</span>', praying:'You haven\'t Selah\'d any requests yet.', answered:'No answered prayers yet.<span>Keep praying.</span>' };
+    const msgs = {
+      all: 'No prayer requests yet.<span>Post a prayer request from the feed.</span>',
+      praying: 'You haven\'t prayed for any requests yet.<span>Tap Pray on a request to start.</span>',
+      answered: 'No answered prayers yet.<span>Keep praying.</span>'
+    };
     feed.innerHTML = `<div class="empty-state">${msgs[currentPrayerFilter]}</div>`;
     return;
   }
@@ -2109,12 +2158,15 @@ function renderPrayerFeed() {
     const name = p.full_name || 'Someone';
     const initial = name[0].toUpperCase();
     const avatarUrl = p.avatar_url;
-    const selahCount = post.selahs ? post.selahs.length : 0;
-    const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
+    const prayCount = post.prays ? post.prays.length : 0;
+    const hasPrayed = post.prays ? post.prays.some(s => s.user_id === currentUser.id) : false;
     const isOwnPrayer = post.user_id === currentUser.id;
     const writtenPrayers = post.prayers || [];
     const avatarHtml = avatarUrl ? `<div class="prayer-avatar"><img src="${avatarUrl}" alt="${name}" /></div>` : `<div class="prayer-avatar">${initial}</div>`;
-    const badgeHtml = post.answered ? `<div class="answered-badge">✓ Answered</div>` : `<div class="praying-badge"><div class="praying-dot"></div>${selahCount} praying</div>`;
+    const badgeHtml = post.answered
+      ? `<div class="answered-badge">✓ Answered</div>`
+      : `<div class="praying-badge"><div class="praying-dot"></div>${prayCount} praying</div>`;
+
     const writtenHtml = writtenPrayers.length ? `
       <div class="written-prayers">
         <div class="written-prayers-label">Prayers written · ${writtenPrayers.length}</div>
@@ -2135,14 +2187,11 @@ function renderPrayerFeed() {
         </div>
         <div class="prayer-body">${post.body}</div>
         <div class="prayer-actions">
-          <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','prayer')">
-            <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
-          </button>
-          ${!post.answered ? `<button class="pray-btn ${hasSelahed?'active':''}" onclick="togglePrayBtn(this,'${post.id}')">
+          ${!post.answered && !isOwnPrayer ? `<button class="pray-btn ${hasPrayed?'active':''}" onclick="togglePray(this,'${post.id}')">
             <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 1C6.5 1 3 4.5 3 6.8C3 8.567 4.567 10 6.5 10C8.433 10 10 8.567 10 6.8C10 4.5 6.5 1 6.5 1Z"/></svg>
-            ${hasSelahed?'Praying':'Pray'}
+            ${hasPrayed ? 'Praying' : 'Pray'}
           </button>` : ''}
-          ${isOwnPrayer && !post.answered ? `<button class="action-btn" style="color:var(--sage);font-weight:500;" onclick="markAnswered('${post.id}')">✓ Answered</button>` : ''}
+          ${isOwnPrayer && !post.answered ? `<button class="action-btn" style="color:var(--sage);font-weight:500;" onclick="markAnswered('${post.id}')">✓ Answered</button>` : (post.answered ? `<span style="font-size:12px;color:var(--water-dk);font-weight:500;">✓ Answered</span>` : '')}
           <button class="write-prayer-btn" onclick="toggleWritePrayer('${post.id}')">Write a prayer</button>
           <button class="action-btn" style="color:var(--stone);font-size:12px;" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
         </div>
@@ -2165,11 +2214,52 @@ function toggleWritePrayer(postId) {
   if (visible) document.getElementById('prt-' + postId).focus();
 }
 
-function togglePrayBtn(btn, postId) {
-  const selahBtn = btn.closest('.prayer-actions').querySelector('.selah-btn');
-  toggleSelah(selahBtn, postId, 'prayer');
+async function togglePray(btn, postId) {
+  const token = getToken();
+  const hasPrayed = btn.classList.contains('active');
+
+  // Optimistic UI
   btn.classList.toggle('active');
   btn.lastChild.textContent = btn.classList.contains('active') ? ' Praying' : ' Pray';
+
+  // Update local data and badge
+  const post = allPrayerPosts.find(p => p.id === postId);
+  if (post) {
+    if (hasPrayed) {
+      post.prays = (post.prays || []).filter(p => p.user_id !== currentUser.id);
+    } else {
+      post.prays = [...(post.prays || []), { user_id: currentUser.id }];
+    }
+    const badge = document.querySelector(`#pc-${postId} .praying-badge`);
+    if (badge) badge.innerHTML = `<div class="praying-dot"></div>${post.prays.length} praying`;
+    updatePrayerSummary();
+    loadSidebarCounts();
+  }
+
+  if (hasPrayed) {
+    await fetch(`${SUPABASE_URL}/rest/v1/prays?user_id=eq.${currentUser.id}&post_id=eq.${postId}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+    });
+  } else {
+    await fetch(`${SUPABASE_URL}/rest/v1/prays`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
+    });
+    // Notify post owner
+    const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    });
+    if (postRes.ok) {
+      const posts = await postRes.json();
+      if (posts[0]) {
+        createNotification(posts[0].user_id, 'prayer', postId);
+        const actorName = currentProfile?.full_name || 'Someone';
+        sendPushNotification(posts[0].user_id, '🙏 Someone is praying', `${actorName} is praying for your request`, '/prayer', 'prayer');
+      }
+    }
+  }
 }
 
 async function submitWrittenPrayer(postId) {
@@ -2200,7 +2290,7 @@ async function submitWrittenPrayer(postId) {
       }
     }
     prayerLoaded = false; loadPrayer(); prayerLoaded = true;
-  } else { alert('Something went wrong.'); }
+  } else { swAlert('Something went wrong', 'Please try again.'); }
   btn.textContent = 'Send prayer'; btn.disabled = false;
 }
 
@@ -2329,7 +2419,7 @@ async function renderProfile() {
 }
 
 async function deletePost(postId, btn) {
-  if (!confirm('Delete this post?')) return;
+  swConfirm('Delete post', 'This cannot be undone.', 'Delete', '#c0392b', () => _deletePost(postId, btn)); return; } async function _deletePost(postId, btn) {
   const token = getToken();
   const card = btn.closest('.post-card');
   card.style.opacity = '0.5';
@@ -2341,7 +2431,7 @@ async function deletePost(postId, btn) {
     const count = parseInt(document.getElementById('statPosts').textContent);
     document.getElementById('statPosts').textContent = Math.max(0, count - 1);
     feedLoaded = false;
-  } else { card.style.opacity = '1'; alert('Could not delete. Please try again.'); }
+  } else { card.style.opacity = '1'; swAlert('Could not delete', 'Please try again.'); }
 }
 
 // ── AVATAR UPLOAD ──
@@ -2352,12 +2442,12 @@ async function uploadAvatar(input) {
   // ── VALIDATION ──
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   if (!allowedTypes.includes(file.type)) {
-    alert('Please upload a JPG, PNG, WebP, or GIF image.');
+    swAlert('Invalid file type', 'Please upload a JPG, PNG, WebP, or GIF image.');
     input.value = '';
     return;
   }
   if (file.size > 5 * 1024 * 1024) {
-    alert('Image must be under 5MB.');
+    swAlert('Image too large', 'Please use an image under 5MB.');
     input.value = '';
     return;
   }
@@ -2370,7 +2460,7 @@ async function uploadAvatar(input) {
   URL.revokeObjectURL(objectUrl);
 
   if (img.width < 50 || img.height < 50) {
-    alert('Image is too small. Please use a photo at least 50x50 pixels.');
+    swAlert('Image too small', 'Please use a photo at least 50×50 pixels.');
     input.value = '';
     return;
   }
@@ -2400,7 +2490,7 @@ async function uploadAvatar(input) {
   });
 
   if (!uploadRes.ok) {
-    alert('Upload failed. Please try again.');
+    swAlert('Upload failed', 'Please try again.');
     input.value = '';
     return;
   }
@@ -2483,7 +2573,7 @@ async function saveProfile() {
     if (updates.testimony)         document.getElementById('testimony').textContent = updates.testimony;
     if (updates.spiritual_gifts)   document.getElementById('spiritualGifts').textContent = updates.spiritual_gifts;
     closeEditModal();
-  } else { alert('Something went wrong. Please try again.'); }
+  } else { swAlert('Something went wrong', 'Please try again.'); }
 
   btn.textContent = 'Save changes'; btn.disabled = false;
 }
@@ -2657,8 +2747,9 @@ async function signOut() {
 async function deleteAccount() {
   closeAvatarDropdown();
 
-  if (!confirm('Are you sure you want to delete your account?\n\nThis will permanently delete all your posts, prayer requests, comments, and profile.\n\nThis cannot be undone.')) return;
-  if (!confirm('Last chance — are you absolutely sure? Everything will be gone forever.')) return;
+  swConfirm('Delete account', 'This will permanently delete all your posts, prayer requests, comments, and profile. This cannot be undone.', 'Yes, delete', '#c0392b', () => _deleteAccountConfirmed()); return;
+}
+async function _deleteAccountConfirmed() {
 
   const token = getToken();
   const navAvatar = document.getElementById('navAvatar');
@@ -2675,11 +2766,11 @@ async function deleteAccount() {
       window.location.href = '/';
     } else {
       const err = await res.json().catch(() => ({}));
-      alert('Could not delete account: ' + (err.error || 'Please try again.'));
+      swAlert('Could not delete account', err.error || 'Please try again.');
       navAvatar.style.opacity = '1';
     }
   } catch (err) {
-    alert('Something went wrong. Please try again.');
+    swAlert('Something went wrong', 'Please try again.');
     navAvatar.style.opacity = '1';
   }
 }
@@ -3243,8 +3334,17 @@ function renderPersonCard(p) {
 }
 
 // ── MARK PRAYER AS ANSWERED ──
-async function markAnswered(postId) {
-  if (!confirm('Mark this prayer as answered? This will let everyone know God came through.')) return;
+function markAnswered(postId) {
+  swConfirm(
+    'Mark as answered',
+    'This will let everyone know God came through. This cannot be undone.',
+    'Mark answered',
+    'var(--sage)',
+    () => _doMarkAnswered(postId)
+  );
+}
+
+async function _doMarkAnswered(postId) {
   const token = getToken();
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&user_id=eq.${currentUser.id}`, {
@@ -3258,14 +3358,13 @@ async function markAnswered(postId) {
   });
 
   if (res.ok) {
-    // Update local data and re-render
     const post = allPrayerPosts.find(p => p.id === postId);
     if (post) post.answered = true;
     updatePrayerSummary();
     renderPrayerFeed();
     loadSidebarCounts();
   } else {
-    alert('Something went wrong. Please try again.');
+    swAlert('Something went wrong', 'Please try again.');
   }
 }
 
@@ -3520,7 +3619,7 @@ async function saveEditPost() {
     if (currentView === 'feed') { loadFeed(); feedLoaded = true; }
     if (currentView === 'profile') { renderProfile(); profileLoaded = true; }
   } else {
-    alert('Something went wrong. Please try again.');
+    swAlert('Something went wrong', 'Please try again.');
   }
 
   btn.textContent = 'Save changes'; btn.disabled = false;
@@ -3761,6 +3860,45 @@ async function handleInstallAccept() {
   deferredInstallPrompt.prompt();
   await deferredInstallPrompt.userChoice;
   deferredInstallPrompt = null;
+}
+
+// ══════════════════════════════════════
+// CUSTOM MODAL (replaces confirm/alert)
+// ══════════════════════════════════════
+function swConfirm(title, body, confirmText, confirmColor, onConfirm, cancelText) {
+  const overlay = document.getElementById('sw-modal-overlay');
+  document.getElementById('sw-modal-title').textContent = title;
+  document.getElementById('sw-modal-body').textContent = body;
+  document.getElementById('sw-modal-actions').innerHTML = `
+    <button class="sw-modal-cancel" onclick="swModalClose()">${cancelText || 'Cancel'}</button>
+    <button class="sw-modal-confirm" style="background:${confirmColor||'var(--water-dk)'};" onclick="swModalConfirm()">${confirmText || 'Confirm'}</button>
+  `;
+  overlay._onConfirm = onConfirm;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function swAlert(title, body, btnText) {
+  const overlay = document.getElementById('sw-modal-overlay');
+  document.getElementById('sw-modal-title').textContent = title;
+  document.getElementById('sw-modal-body').textContent = body;
+  document.getElementById('sw-modal-actions').innerHTML = `
+    <button class="sw-modal-confirm" style="background:var(--water-dk);" onclick="swModalClose()">${btnText || 'OK'}</button>
+  `;
+  overlay._onConfirm = null;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function swModalClose() {
+  document.getElementById('sw-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function swModalConfirm() {
+  const overlay = document.getElementById('sw-modal-overlay');
+  swModalClose();
+  if (overlay._onConfirm) overlay._onConfirm();
 }
 
 // ── START ──
