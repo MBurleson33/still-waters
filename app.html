@@ -2617,28 +2617,13 @@ async function toggleFollowUserProfile() {
   countEl.textContent = isFollowing ? Math.max(0, current - 1) : current + 1;
 }
 
-  // Fetch profile, posts, follows — handled by new viewUserProfile above
-}
-
 async function toggleFollowFromModal() {
   // Legacy — redirects to new implementation
   toggleFollowUserProfile();
 }
-  const btn = document.getElementById('userModalFollowBtn');
-  await toggleFollow(btn, viewingUserId, '');
-
-  // Update button state
-  const isNowFollowing = followingIds.includes(viewingUserId);
-  btn.textContent = isNowFollowing ? 'Following' : 'Follow';
-  btn.className = 'user-modal-follow-btn' + (isNowFollowing ? ' following' : '');
-
-  // Update follower count in modal
-  const currentCount = parseInt(document.getElementById('userModalFollowers').textContent) || 0;
-  document.getElementById('userModalFollowers').textContent = isNowFollowing ? currentCount + 1 : Math.max(0, currentCount - 1);
-}
 
 function closeUserModal() {
-  document.getElementById('userModalOverlay').classList.remove('open');
+  document.getElementById('userModalOverlay')?.classList.remove('open');
   document.body.style.overflow = '';
   viewingUserId = null;
 }
