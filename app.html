@@ -860,6 +860,84 @@ body {
 .person-bio { font-size: 13px; color: var(--bark); margin-top: 3px; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 
 /* ══════════════════════════════════════
+   SEARCH MODAL
+══════════════════════════════════════ */
+#search-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(61,50,42,0.5);
+  z-index: 400;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0;
+}
+#search-modal-overlay.open { display: flex; }
+#search-modal {
+  background: var(--sand);
+  width: 100%;
+  max-width: 620px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideDown 0.25s ease;
+  overflow: hidden;
+}
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.search-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--linen);
+  flex-shrink: 0;
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+.search-modal-close {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: none; background: var(--linen);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--bark); flex-shrink: 0; transition: background 0.2s;
+}
+.search-modal-close:hover { background: var(--stone); }
+.search-modal-close svg { width: 16px; height: 16px; }
+.search-modal-input-wrap {
+  flex: 1; position: relative;
+}
+.search-modal-input {
+  width: 100%; padding: 10px 14px 10px 40px;
+  border: 1.5px solid var(--linen); border-radius: 20px;
+  font-family: 'DM Sans', sans-serif; font-size: 15px;
+  color: var(--deep); background: var(--cream);
+  outline: none; transition: border-color 0.2s;
+}
+.search-modal-input:focus { border-color: var(--water); }
+.search-modal-input::placeholder { color: var(--stone); }
+.search-modal-input-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); color: var(--clay); pointer-events: none;
+}
+.search-modal-input-icon svg { width: 16px; height: 16px; }
+.search-modal-body {
+  flex: 1; overflow-y: auto; padding: 20px;
+}
+
+@media (min-width: 700px) {
+  #search-modal {
+    margin-top: 60px;
+    height: auto;
+    max-height: 80vh;
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(61,50,42,0.2);
+  }
+  .search-modal-header { padding-top: 16px; }
+}
+
+/* ══════════════════════════════════════
    EDIT PROFILE MODAL
 ══════════════════════════════════════ */
 .edit-overlay { display:none; position:fixed; inset:0; background:rgba(61,50,42,0.5); z-index:300; align-items:center; justify-content:center; padding:24px; }
@@ -1162,7 +1240,7 @@ body {
         <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
         Feed
       </button>
-      <button class="sb-nav-item" id="nav-search" onclick="navigate('search')">
+      <button class="sb-nav-item" id="nav-search" onclick="openSearch()">
         <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         Search
       </button>
@@ -1451,7 +1529,7 @@ body {
     <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
     <span class="bnav-label">Feed</span>
   </button>
-  <button class="bnav-btn" id="bnav-search" onclick="navigate('search')">
+  <button class="bnav-btn" id="bnav-search" onclick="openSearch()">
     <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
     <span class="bnav-label">Search</span>
   </button>
@@ -1528,6 +1606,36 @@ body {
     <button class="user-modal-follow-btn" id="userModalFollowBtn" onclick="toggleFollowFromModal()">Follow</button>
     <div class="user-modal-posts-label">Recent posts</div>
     <div id="userModalPosts-list"></div>
+  </div>
+</div>
+
+<!-- SEARCH MODAL -->
+<div id="search-modal-overlay" onclick="closeSearchIfOutside(event)">
+  <div id="search-modal">
+    <div class="search-modal-header">
+      <button class="search-modal-close" onclick="closeSearch()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 4L4 12M4 4l8 8"/></svg>
+      </button>
+      <div class="search-modal-input-wrap">
+        <div class="search-modal-input-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        </div>
+        <input
+          class="search-modal-input"
+          id="searchModalInput"
+          type="text"
+          placeholder="Search people…"
+          oninput="handleSearch(this.value)"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+    <div class="search-modal-body">
+      <div class="search-section-label">Suggested — people to follow</div>
+      <div id="searchModalResults">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1655,6 +1763,7 @@ function closeAllModals() {
   document.getElementById('postDetailOverlay')?.classList.remove('open');
   document.getElementById('editPostOverlay')?.classList.remove('open');
   document.getElementById('editOverlay')?.classList.remove('open');
+  document.getElementById('search-modal-overlay')?.classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -2945,15 +3054,34 @@ async function updateCommentCount(postId) {
 }
 
 // ══════════════════════════════════════
-// SEARCH
+// SEARCH MODAL
 // ══════════════════════════════════════
 let searchTimeout = null;
 
+function openSearch() {
+  document.getElementById('search-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('searchModalResults').innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  document.getElementById('searchModalInput').value = '';
+  document.querySelector('.search-modal-body .search-section-label').textContent = 'Suggested — people to follow';
+  loadSuggested();
+  setTimeout(() => document.getElementById('searchModalInput').focus(), 100);
+}
+
+function closeSearch() {
+  document.getElementById('search-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('searchModalInput').value = '';
+}
+
+function closeSearchIfOutside(e) {
+  if (e.target === document.getElementById('search-modal-overlay')) closeSearch();
+}
+
 async function loadSuggested() {
   const token = getToken();
-  const list = document.getElementById('suggestedList');
+  const list = document.getElementById('searchModalResults');
 
-  // Show people you don't follow yet (excluding yourself)
   const followingList = followingIds.length > 0 ? followingIds.join(',') : null;
   let url = `${SUPABASE_URL}/rest/v1/profiles?id=neq.${currentUser.id}&select=id,full_name,username,avatar_url,bio&limit=20&order=created_at.desc`;
   if (followingList) url += `&id=not.in.(${followingList})`;
@@ -2975,22 +3103,24 @@ async function loadSuggested() {
 
 function handleSearch(query) {
   clearTimeout(searchTimeout);
-  const results = document.getElementById('searchResults');
+  const results = document.getElementById('searchModalResults');
+  const label = document.querySelector('.search-modal-body .search-section-label');
 
   if (!query.trim()) {
-    results.innerHTML = `<div class="search-section-label">Suggested — people to follow</div><div id="suggestedList"><div class="loading"><div class="spinner"></div>Loading…</div></div>`;
+    label.textContent = 'Suggested — people to follow';
+    results.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
     loadSuggested();
     return;
   }
 
-  results.innerHTML = `<div class="search-section-label">Results</div><div id="searchResultsList"><div class="loading"><div class="spinner"></div>Searching…</div></div>`;
-
+  label.textContent = 'Results';
+  results.innerHTML = '<div class="loading"><div class="spinner"></div>Searching…</div>';
   searchTimeout = setTimeout(() => doSearch(query.trim()), 300);
 }
 
 async function doSearch(query) {
   const token = getToken();
-  const list = document.getElementById('searchResultsList');
+  const list = document.getElementById('searchModalResults');
   if (!list) return;
 
   const res = await fetch(
@@ -3018,7 +3148,7 @@ function renderPersonCard(p) {
     : `<div class="person-avatar">${initial}</div>`;
 
   return `
-    <div class="person-card" onclick="viewUserProfile('${p.id}')">
+    <div class="person-card" onclick="closeSearch();viewUserProfile('${p.id}')">
       ${avatarHtml}
       <div style="flex:1;min-width:0;">
         <div class="person-name">${name}</div>
