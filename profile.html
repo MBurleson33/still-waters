@@ -692,12 +692,29 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let currentUser = null;
 
 function getToken() {
-  const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-  if (!key) return null;
-  try {
-    const session = JSON.parse(localStorage.getItem(key));
-    return session?.access_token || null;
-  } catch { return null; }
+  // Try standard sb- key format first
+  const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (sbKey) {
+    try {
+      const session = JSON.parse(localStorage.getItem(sbKey));
+      if (session?.access_token) return session.access_token;
+    } catch {}
+  }
+  // Try any JSON object containing an access_token
+  for (const key of Object.keys(localStorage)) {
+    try {
+      const val = localStorage.getItem(key);
+      if (!val || !val.startsWith('{')) continue;
+      const parsed = JSON.parse(val);
+      if (parsed?.access_token && parsed.access_token.startsWith('eyJ')) return parsed.access_token;
+    } catch {}
+  }
+  // Try raw JWT string values
+  for (const key of Object.keys(localStorage)) {
+    const val = localStorage.getItem(key);
+    if (val && val.startsWith('eyJ') && !val.includes(' ')) return val;
+  }
+  return null;
 }
 
 // ── LOAD PROFILE ──
