@@ -281,7 +281,6 @@ async function loadDashboard(token, user) {
 
   // Single API call using service role key server-side
   const savedPw = sessionStorage.getItem('sw-admin-pw');
-  console.log('Calling admin-data with password length:', savedPw?.length);
 
   let dataRes;
   try {
@@ -290,7 +289,6 @@ async function loadDashboard(token, user) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: savedPw })
     });
-    console.log('admin-data response status:', dataRes.status);
   } catch(e) {
     clearTimeout(safetyTimer);
     document.getElementById('container').innerHTML = `<div class="error-state"><h2>Network error</h2><p style="color:var(--clay);font-size:14px;margin-top:8px;">${e.message}</p></div>`;
@@ -299,11 +297,21 @@ async function loadDashboard(token, user) {
 
   if (!dataRes.ok) {
     clearTimeout(safetyTimer);
-    document.getElementById('container').innerHTML = `<div class="error-state"><h2>Could not load data</h2><p style="color:var(--clay);font-size:14px;margin-top:8px;">Status: ${dataRes.status}</p></div>`;
+    const errText = await dataRes.text();
+    document.getElementById('container').innerHTML = `<div class="error-state"><h2>API error ${dataRes.status}</h2><p style="color:var(--clay);font-size:14px;margin-top:8px;">${errText}</p></div>`;
     return;
   }
 
-  const { users, posts, prayers, selahs, comments, prays, follows, pushSubs } = await dataRes.json();
+  let data;
+  try {
+    data = await dataRes.json();
+  } catch(e) {
+    clearTimeout(safetyTimer);
+    document.getElementById('container').innerHTML = `<div class="error-state"><h2>Parse error</h2><p style="color:var(--clay);font-size:14px;margin-top:8px;">${e.message}</p></div>`;
+    return;
+  }
+
+  const { users, posts, prayers, selahs, comments, prays, follows, pushSubs } = data;
 
   clearTimeout(safetyTimer);
 
