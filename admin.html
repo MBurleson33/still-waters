@@ -267,8 +267,6 @@ async function loadDashboard(token, user) {
 
 async function loadDashboard(token, user) {
   try {
-  // Load all data in parallel
-  const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' };
 
   const fetchSafe = async (url, opts) => {
     try {
@@ -281,16 +279,21 @@ async function loadDashboard(token, user) {
     } catch(e) { console.warn('Fetch error:', url, e.message); return []; }
   };
 
-  const [users, posts, prayers, selahs, comments, prays, follows, pushSubs] = await Promise.all([
-    fetchSafe(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,username,avatar_url,created_at,onboarded&order=created_at.desc`, { headers }),
-    fetchSafe(`${SUPABASE_URL}/rest/v1/posts?select=id,type,created_at,answered,user_id&order=created_at.desc`, { headers }),
-    fetchSafe(`${SUPABASE_URL}/rest/v1/prayers?select=id,created_at`, { headers }),
-    fetchSafe(`${SUPABASE_URL}/rest/v1/selahs?select=id,created_at`, { headers }),
-    fetchSafe(`${SUPABASE_URL}/rest/v1/comments?select=id,created_at`, { headers }),
-    fetchSafe(`${SUPABASE_URL}/rest/v1/prays?select=id,created_at`, { headers }),
-    fetchSafe(`${SUPABASE_URL}/rest/v1/follows?select=id,created_at`, { headers }),
-    fetchSafe(`${SUPABASE_URL}/rest/v1/push_subscriptions?select=id,user_id`, { headers }),
-  ]);
+  // Single API call using service role key server-side
+  const savedPw = sessionStorage.getItem('sw-admin-pw');
+  const dataRes = await fetch('/api/admin-data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: savedPw })
+  });
+
+  if (!dataRes.ok) {
+    clearTimeout(safetyTimer);
+    document.getElementById('container').innerHTML = `<div class="error-state"><h2>Could not load data</h2><p style="color:var(--clay);font-size:14px;margin-top:8px;">Status: ${dataRes.status}</p></div>`;
+    return;
+  }
+
+  const { users, posts, prayers, selahs, comments, prays, follows, pushSubs } = await dataRes.json();
 
   clearTimeout(safetyTimer);
 
