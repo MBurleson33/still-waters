@@ -221,6 +221,19 @@ async function checkPassword() {
   if (valid) {
     sessionStorage.setItem('sw-admin-pw', pw);
     document.getElementById('container').innerHTML = '<div class="loading"><div class="spinner"></div>Loading dashboard…</div>';
+
+  // Safety timeout — if nothing loads in 12s, show error
+  const safetyTimer = setTimeout(() => {
+    document.getElementById('container').innerHTML = `
+      <div class="error-state">
+        <h2>Timed out</h2>
+        <p style="color:var(--clay);font-size:14px;margin-top:8px;">Could not load dashboard data. Check console for details.</p>
+        <button onclick="sessionStorage.removeItem('sw-admin-pw');location.reload()"
+          style="margin-top:20px;padding:10px 24px;background:var(--water-dk);border:none;border-radius:20px;color:white;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+          Try again
+        </button>
+      </div>`;
+  }, 12000);
     const token = getToken();
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
@@ -259,10 +272,13 @@ async function loadDashboard(token, user) {
 
   const fetchSafe = async (url, opts) => {
     try {
-      const res = await fetch(url, opts);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(url, { ...opts, signal: controller.signal });
+      clearTimeout(timeout);
       if (!res.ok) { console.warn('Fetch failed:', url, res.status); return []; }
       return await res.json();
-    } catch(e) { console.warn('Fetch error:', url, e); return []; }
+    } catch(e) { console.warn('Fetch error:', url, e.message); return []; }
   };
 
   const [users, posts, prayers, selahs, comments, prays, follows, pushSubs] = await Promise.all([
@@ -275,6 +291,8 @@ async function loadDashboard(token, user) {
     fetchSafe(`${SUPABASE_URL}/rest/v1/follows?select=id,created_at`, { headers }),
     fetchSafe(`${SUPABASE_URL}/rest/v1/push_subscriptions?select=id,user_id`, { headers }),
   ]);
+
+  clearTimeout(safetyTimer);
 
   const prayerPosts = posts.filter(p => p.type === 'prayer');
   const thoughtPosts = posts.filter(p => p.type === 'thought');
