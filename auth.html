@@ -783,14 +783,15 @@ async function handleAuthCallback() {
 // Run callback FIRST before anything touches the URL
 handleAuthCallback();
 
-// Only replace history if there's no token in the URL
+// Build history stack so back button goes to landing page
 if (!window.location.hash && !window.location.search) {
-  history.replaceState(null, '', '/auth');
+  history.replaceState(null, '', '/');   // landing page at bottom of stack
+  history.pushState(null, '', '/auth');  // auth on top
 }
 
-// Prevent 404 on browser back — go to landing page
+// Handle back — go to landing page
 window.addEventListener('popstate', () => {
-  window.location.replace('/');
+  window.location.href = '/';
 });
 </script>
 </body>
