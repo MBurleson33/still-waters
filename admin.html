@@ -233,7 +233,7 @@ async function checkPassword() {
           Try again
         </button>
       </div>`;
-  }, 5000);
+  }, 20000);
     const token = getToken();
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
