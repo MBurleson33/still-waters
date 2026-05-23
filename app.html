@@ -1310,7 +1310,7 @@ input, textarea, select {
         <div id="notifList"><div class="notif-empty">No notifications yet.</div></div>
       </div>
     </div>
-    <div class="nav-avatar" id="navAvatar" onclick="toggleAvatarDropdown()">M</div>
+    <div class="nav-avatar" id="navAvatar" onclick="toggleAvatarDropdown();handleAdminTap()">M</div>
     <div class="avatar-dropdown" id="avatarDropdown">
       <div class="dropdown-header">
         <div class="dropdown-name" id="dropdownName">—</div>
@@ -1506,6 +1506,22 @@ input, textarea, select {
         </div>
       </div>
 
+    </div>
+
+    <!-- ── ADMIN VIEW ── -->
+    <div class="view" id="view-admin">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+        <button onclick="navigate('feed')" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--linen);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--bark);flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 13L5 8l5-5"/></svg>
+        </button>
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--deep);">Admin <em style="font-style:italic;color:var(--water-dk);">dashboard</em></div>
+          <div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--stone);margin-top:2px;">Still Waters</div>
+        </div>
+      </div>
+      <div id="admin-content">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
     </div>
 
     <!-- ── USER PROFILE VIEW ── -->
@@ -2008,7 +2024,7 @@ function navigate(view, skipPush) {
   if (!skipPush) history.pushState({ view }, '', '/' + view);
 
   // Update title
-  const titles = { feed: 'Still Waters — Feed', prayer: 'Still Waters — Prayer', profile: 'Still Waters — Profile', search: 'Still Waters — Search', 'user-profile': 'Still Waters — Profile' };
+  const titles = { feed: 'Still Waters — Feed', prayer: 'Still Waters — Prayer', profile: 'Still Waters — Profile', search: 'Still Waters — Search', 'user-profile': 'Still Waters — Profile', admin: 'Still Waters — Admin' };
   document.title = titles[view] || 'Still Waters';
 
   // Load data if needed
@@ -4189,8 +4205,99 @@ function closeFollowSheetIfOutside(e) {
   if (e.target === document.getElementById('follow-sheet-overlay')) closeFollowSheet();
 }
 
+// ══════════════════════════════════════
+// ADMIN DASHBOARD
+// ══════════════════════════════════════
+let adminTapCount = 0;
+let adminTapTimer = null;
+
+function handleAdminTap() {
+  adminTapCount++;
+  clearTimeout(adminTapTimer);
+  adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 2000);
+  if (adminTapCount >= 5) {
+    adminTapCount = 0;
+    navigate('admin');
+    loadAdminDashboard();
+  }
+}
+
 // ── START ──
 init();
+  const content = document.getElementById('admin-content');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+
+  const token = getToken();
+  const fetchSafe = async (url) => {
+    try {
+      const res = await fetch(url, {
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+      });
+      if (!res.ok) return [];
+      return await res.json();
+    } catch { return []; }
+  };
+
+  const [users, posts, prayers, selahs, comments, prays, follows, pushSubs] = await Promise.all([
+    fetchSafe(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,username,avatar_url,created_at,onboarded&order=created_at.desc`),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/posts?select=id,type,created_at,answered,user_id&order=created_at.desc`),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/prayers?select=id,created_at`),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/selahs?select=id,created_at`),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/comments?select=id,created_at`),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/prays?select=id,created_at`),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/follows?select=id,created_at`),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/push_subscriptions?select=id,user_id`),
+  ]);
+
+  const prayerPosts = posts.filter(p => p.type === 'prayer');
+  const thoughtPosts = posts.filter(p => p.type === 'thought');
+  const scripturePosts = posts.filter(p => p.type === 'scripture');
+  const answeredPrayers = prayerPosts.filter(p => p.answered);
+  const week = new Date(Date.now() - 7 * 86400000);
+  const newUsersWeek = users.filter(u => new Date(u.created_at) > week).length;
+  const newPostsWeek = posts.filter(p => new Date(p.created_at) > week).length;
+
+  content.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+      ${[
+        ['Total members', users.length, `+${newUsersWeek} this week`],
+        ['Total posts', posts.length, `+${newPostsWeek} this week`],
+        ['Prayer requests', prayerPosts.length, `${answeredPrayers.length} answered`],
+        ['Selahs + Prays', selahs.length + prays.length, `${selahs.length} selahs · ${prays.length} prays`],
+        ['Comments', comments.length, ''],
+        ['Follows', follows.length, ''],
+        ['Written prayers', prayers.length, ''],
+        ['Push subscribers', pushSubs.length, ''],
+      ].map(([label, val, sub]) => `
+        <div style="background:var(--white);border-radius:14px;padding:16px;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--deep);">${val}</div>
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:var(--clay);">${label}</div>
+          ${sub ? `<div style="font-size:11px;color:var(--stone);margin-top:2px;">${sub}</div>` : ''}
+        </div>`).join('')}
+    </div>
+
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--deep);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--linen);">
+      Members <em style="font-style:italic;color:var(--water-dk);">(${users.length})</em>
+    </div>
+    ${users.map(u => {
+      const name = u.full_name || 'Unknown';
+      const hasNotif = pushSubs.some(s => s.user_id === u.id);
+      const userPosts = posts.filter(p => p.user_id === u.id).length;
+      const avatarHtml = u.avatar_url
+        ? `<img src="${u.avatar_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />`
+        : `<div style="width:36px;height:36px;border-radius:50%;background:var(--water-lt);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--water-dk);">${name[0]}</div>`;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--linen);">
+          ${avatarHtml}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:500;color:var(--deep);">${name} ${hasNotif ? '🔔' : ''}</div>
+            <div style="font-size:12px;color:var(--clay);">${u.username ? '@'+u.username : ''} · ${userPosts} posts · joined ${new Date(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+          </div>
+          ${u.onboarded ? '<div style="font-size:11px;color:var(--sage);">✓</div>' : ''}
+        </div>`;
+    }).join('')}
+  `;
+}
 </script>
 
 </body>
