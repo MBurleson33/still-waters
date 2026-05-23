@@ -235,6 +235,7 @@ async function verifyPassword(pw) {
 async function loadDashboard(token, user) {
 
 async function loadDashboard(token, user) {
+  try {
   // Load all data in parallel
   const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' };
 
@@ -364,6 +365,18 @@ async function loadDashboard(token, user) {
 
     </div>
   `;
+  } catch(err) {
+    console.error('Dashboard error:', err);
+    document.getElementById('container').innerHTML = `
+      <div class="error-state">
+        <h2>Something went wrong</h2>
+        <p style="color:var(--clay);font-size:14px;margin-top:8px;">${err.message}</p>
+        <button onclick="sessionStorage.removeItem('sw-admin-pw');location.reload()" 
+          style="margin-top:20px;padding:10px 24px;background:var(--water-dk);border:none;border-radius:20px;color:white;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+          Try again
+        </button>
+      </div>`;
+  }
 }
 
 init();
