@@ -780,6 +780,14 @@ async function handleAuthCallback() {
   }
 }
 
+// Push auth into history so back button doesn't 404
+history.replaceState(null, '', '/auth');
+
+// Prevent 404 on browser back from auth page
+window.addEventListener('popstate', () => {
+  window.location.replace('/auth');
+});
+
 handleAuthCallback();
 </script>
 </body>
