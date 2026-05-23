@@ -1310,7 +1310,7 @@ input, textarea, select {
         <div id="notifList"><div class="notif-empty">No notifications yet.</div></div>
       </div>
     </div>
-    <div class="nav-avatar" id="navAvatar" onclick="toggleAvatarDropdown();handleAdminTap()">M</div>
+    <div class="nav-avatar" id="navAvatar" onclick="toggleAvatarDropdown()">M</div>
     <div class="avatar-dropdown" id="avatarDropdown">
       <div class="dropdown-header">
         <div class="dropdown-name" id="dropdownName">—</div>
@@ -4222,8 +4222,7 @@ function handleAdminTap() {
   }
 }
 
-// ── START ──
-init();
+async function loadAdminDashboard() {
   const content = document.getElementById('admin-content');
   content.innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
 
@@ -4298,6 +4297,9 @@ init();
     }).join('')}
   `;
 }
+
+// ── START ──
+init();
 </script>
 
 </body>
