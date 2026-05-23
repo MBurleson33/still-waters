@@ -452,7 +452,7 @@ body {
   <!-- LEFT: AUTH -->
   <div class="auth-panel">
 
-    <a href="stillwaters-landing.html" class="auth-back">
+    <a href="/" class="auth-back">
       <svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Back
     </a>
@@ -782,17 +782,6 @@ async function handleAuthCallback() {
 
 // Run callback FIRST before anything touches the URL
 handleAuthCallback();
-
-// Build history stack so back button goes to landing page
-if (!window.location.hash && !window.location.search) {
-  history.replaceState(null, '', '/');   // landing page at bottom of stack
-  history.pushState(null, '', '/auth');  // auth on top
-}
-
-// Handle back — go to landing page
-window.addEventListener('popstate', () => {
-  window.location.href = '/';
-});
 </script>
 </body>
 </html>
