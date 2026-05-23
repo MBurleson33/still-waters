@@ -1310,7 +1310,7 @@ input, textarea, select {
         <div id="notifList"><div class="notif-empty">No notifications yet.</div></div>
       </div>
     </div>
-    <div class="nav-avatar" id="navAvatar" onclick="toggleAvatarDropdown()">M</div>
+    <div class="nav-avatar" id="navAvatar" onclick="toggleAvatarDropdown()" oncontextmenu="event.preventDefault();navigate('admin');loadAdminDashboard();" ontouchstart="startAdminHold(event)" ontouchend="cancelAdminHold()" ontouchmove="cancelAdminHold()">M</div>
     <div class="avatar-dropdown" id="avatarDropdown">
       <div class="dropdown-header">
         <div class="dropdown-name" id="dropdownName">—</div>
@@ -4208,18 +4208,19 @@ function closeFollowSheetIfOutside(e) {
 // ══════════════════════════════════════
 // ADMIN DASHBOARD
 // ══════════════════════════════════════
-let adminTapCount = 0;
-let adminTapTimer = null;
+let adminHoldTimer = null;
 
-function handleAdminTap() {
-  adminTapCount++;
-  clearTimeout(adminTapTimer);
-  adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 2000);
-  if (adminTapCount >= 5) {
-    adminTapCount = 0;
+function startAdminHold(e) {
+  adminHoldTimer = setTimeout(() => {
+    e.preventDefault();
+    closeAvatarDropdown();
     navigate('admin');
     loadAdminDashboard();
-  }
+  }, 1500); // hold for 1.5 seconds
+}
+
+function cancelAdminHold() {
+  clearTimeout(adminHoldTimer);
 }
 
 async function loadAdminDashboard() {
