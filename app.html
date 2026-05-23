@@ -3941,12 +3941,16 @@ async function initPushNotifications() {
 
 async function requestNotifPermission() {
   closeAvatarDropdown();
-  if (Notification.permission === 'granted') {
-    swAlert('Notifications enabled', 'You\'re already receiving notifications from Still Waters.');
-    return;
-  }
   if (Notification.permission === 'denied') {
     swAlert('Notifications blocked', 'Please enable notifications for Still Waters in your device Settings → Notifications.');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    // Try to resubscribe in case subscription was lost
+    const result = await subscribeToPush();
+    if (result) {
+      showToast('Notifications enabled ✓');
+    }
     return;
   }
   const permission = await Notification.requestPermission();
@@ -3961,6 +3965,11 @@ async function requestNotifPermission() {
 async function subscribeToPush() {
   try {
     const reg = await navigator.serviceWorker.ready;
+
+    // Unsubscribe any existing subscription first to get a fresh one
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) await existing.unsubscribe();
+
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
