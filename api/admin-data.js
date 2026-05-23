@@ -1,13 +1,23 @@
 export default async function handler(req, res) {
+  // Allow GET for testing
+  if (req.method === 'GET') {
+    return res.status(200).json({ status: 'ok', message: 'admin-data endpoint is live' });
+  }
+
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { password } = req.body;
-  if (password !== process.env.ADMIN_PASSWORD) {
+  const { password } = req.body || {};
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const SUPABASE_URL = 'https://olhpiqxxofcwlkpvimug.supabase.co';
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!SERVICE_KEY) {
+    return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not set' });
+  }
+
   const headers = {
     'apikey': SERVICE_KEY,
     'Authorization': `Bearer ${SERVICE_KEY}`,
@@ -16,9 +26,9 @@ export default async function handler(req, res) {
 
   const fetchSafe = async (url) => {
     try {
-      const res = await fetch(url, { headers });
-      if (!res.ok) { console.warn('Failed:', url, res.status); return []; }
-      return await res.json();
+      const r = await fetch(url, { headers });
+      if (!r.ok) { console.warn('Failed:', url, r.status, await r.text()); return []; }
+      return await r.json();
     } catch(e) { console.warn('Error:', url, e.message); return []; }
   };
 
