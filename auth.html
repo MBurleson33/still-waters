@@ -788,9 +788,9 @@ if (!window.location.hash && !window.location.search) {
   history.replaceState(null, '', '/auth');
 }
 
-// Prevent 404 on browser back
+// Prevent 404 on browser back — go to landing page
 window.addEventListener('popstate', () => {
-  window.location.replace('/auth');
+  window.location.replace('/');
 });
 </script>
 </body>
