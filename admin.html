@@ -167,18 +167,31 @@ async function init() {
   const token = getToken();
   if (!token) { window.location.href = '/auth'; return; }
 
-  // Verify user is logged in
+  // Clear stale session if ?reset in URL
+  if (window.location.search.includes('reset')) {
+    sessionStorage.removeItem('sw-admin-pw');
+  }
+
+  // Always show password gate first
+  const savedPw = sessionStorage.getItem('sw-admin-pw');
+  if (!savedPw) {
+    showPasswordGate();
+    return;
+  }
+
+  // Verify saved password
+  const valid = await verifyPassword(savedPw);
+  if (!valid) {
+    sessionStorage.removeItem('sw-admin-pw');
+    showPasswordGate();
+    return;
+  }
+
   const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
   });
   if (!userRes.ok) { window.location.href = '/auth'; return; }
   const user = await userRes.json();
-
-  // Check admin password
-  const savedPw = sessionStorage.getItem('sw-admin-pw');
-  if (!savedPw) { showPasswordGate(); return; }
-  const valid = await verifyPassword(savedPw);
-  if (!valid) { sessionStorage.removeItem('sw-admin-pw'); showPasswordGate(); return; }
 
   loadDashboard(token, user);
 }
@@ -223,13 +236,18 @@ async function checkPassword() {
 
 async function verifyPassword(pw) {
   try {
+    console.log('Verifying password...');
     const res = await fetch('/api/admin-auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pw })
     });
+    console.log('Auth response:', res.status);
     return res.ok;
-  } catch { return false; }
+  } catch(e) { 
+    console.error('Auth error:', e);
+    return false; 
+  }
 }
 
 async function loadDashboard(token, user) {
@@ -239,25 +257,24 @@ async function loadDashboard(token, user) {
   // Load all data in parallel
   const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' };
 
-  const [usersRes, postsRes, prayersRes, selahsRes, commentsRes, praysRes, followsRes, pushRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,username,avatar_url,created_at,onboarded&order=created_at.desc`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/posts?select=id,type,created_at,answered,user_id&order=created_at.desc`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/prayers?select=id,created_at`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/selahs?select=id,created_at`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/comments?select=id,created_at`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/prays?select=id,created_at`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/follows?select=id,created_at`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?select=id,user_id`, { headers }),
-  ]);
+  const fetchSafe = async (url, opts) => {
+    try {
+      const res = await fetch(url, opts);
+      if (!res.ok) { console.warn('Fetch failed:', url, res.status); return []; }
+      return await res.json();
+    } catch(e) { console.warn('Fetch error:', url, e); return []; }
+  };
 
-  const users    = usersRes.ok    ? await usersRes.json()    : [];
-  const posts    = postsRes.ok    ? await postsRes.json()    : [];
-  const prayers  = prayersRes.ok  ? await prayersRes.json()  : [];
-  const selahs   = selahsRes.ok   ? await selahsRes.json()  : [];
-  const comments = commentsRes.ok ? await commentsRes.json() : [];
-  const prays    = praysRes.ok    ? await praysRes.json()    : [];
-  const follows  = followsRes.ok  ? await followsRes.json()  : [];
-  const pushSubs = pushRes.ok     ? await pushRes.json()     : [];
+  const [users, posts, prayers, selahs, comments, prays, follows, pushSubs] = await Promise.all([
+    fetchSafe(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,username,avatar_url,created_at,onboarded&order=created_at.desc`, { headers }),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/posts?select=id,type,created_at,answered,user_id&order=created_at.desc`, { headers }),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/prayers?select=id,created_at`, { headers }),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/selahs?select=id,created_at`, { headers }),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/comments?select=id,created_at`, { headers }),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/prays?select=id,created_at`, { headers }),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/follows?select=id,created_at`, { headers }),
+    fetchSafe(`${SUPABASE_URL}/rest/v1/push_subscriptions?select=id,user_id`, { headers }),
+  ]);
 
   const prayerPosts = posts.filter(p => p.type === 'prayer');
   const thoughtPosts = posts.filter(p => p.type === 'thought');
