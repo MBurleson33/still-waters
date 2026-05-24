@@ -2348,7 +2348,7 @@ function renderPrayerFeed() {
           const wpp = wp.profile || {};
           const wpn = wpp.full_name || 'Someone';
           const wpa = wpp.avatar_url ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>` : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
-          return `<div class="written-prayer-item">${wpa}<div class="written-prayer-bubble"><div class="written-prayer-name">${wpn}</div><div class="written-prayer-text">${wp.body}</div></div></div>`;
+          return renderWrittenPrayer(wp);
         }).join('')}
       </div>` : '';
 
@@ -2569,7 +2569,7 @@ async function renderProfile() {
           const wpp = wp.profile || {};
           const wpn = wpp.full_name || 'Someone';
           const wpa = wpp.avatar_url ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>` : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
-          return `<div class="written-prayer-item">${wpa}<div class="written-prayer-bubble"><div class="written-prayer-name">${wpn}</div><div class="written-prayer-text">${wp.body}</div></div></div>`;
+          return renderWrittenPrayer(wp);
         }).join('')}
       </div>` : '';
     return `
@@ -3126,7 +3126,7 @@ async function viewUserProfile(userId) {
             const wpp = wp.profile || {};
             const wpn = wpp.full_name || 'Someone';
             const wpa = wpp.avatar_url ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>` : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
-            return `<div class="written-prayer-item">${wpa}<div class="written-prayer-bubble"><div class="written-prayer-name">${wpn}</div><div class="written-prayer-text">${wp.body}</div></div></div>`;
+            return renderWrittenPrayer(wp);
           }).join('')}
         </div>` : '';
       return `
@@ -3809,21 +3809,7 @@ async function openPostDetail(postId) {
     prayerSection.style.cssText = 'padding: 16px 20px 8px; border-top: 1px solid var(--linen);';
     prayerSection.innerHTML = `
       <div style="font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--clay);margin-bottom:14px;">Prayers written · ${writtenPrayers.length}</div>
-      ${writtenPrayers.map(wp => {
-        const wpp = wp.profile || {};
-        const wpn = wpp.full_name || 'Someone';
-        const wpa = wpp.avatar_url
-          ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>`
-          : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
-        return `
-          <div class="written-prayer-item">
-            ${wpa}
-            <div class="written-prayer-bubble">
-              <div class="written-prayer-name">${wpn}</div>
-              <div class="written-prayer-text">${wp.body}</div>
-            </div>
-          </div>`;
-      }).join('')}
+      ${writtenPrayers.map(wp => renderWrittenPrayer(wp)).join('')}
     `;
     document.getElementById('postDetailBody').insertBefore(
       prayerSection,
@@ -4489,8 +4475,40 @@ async function loadAdminDashboard() {
   `;
 }
 
+// ── DELETE WRITTEN PRAYER ──
+function renderWrittenPrayer(wp) {
+  const wpp = wp.profile || {};
+  const wpn = wpp.full_name || 'Someone';
+  const wpa = wpp.avatar_url
+    ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>`
+    : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
+  const isOwn = wp.user_id === currentUser.id;
+  return `
+    <div class="written-prayer-item" id="wp-${wp.id}">
+      ${wpa}
+      <div class="written-prayer-bubble" style="position:relative;">
+        <div class="written-prayer-name">${wpn}</div>
+        <div class="written-prayer-text">${wp.body}</div>
+        ${isOwn ? `<button onclick="deleteWrittenPrayer('${wp.id}')" style="position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--stone);padding:0;line-height:1;" title="Delete">×</button>` : ''}
+      </div>
+    </div>`;
+}
+
 // ── START ──
 init();
+  swConfirm('Delete prayer', 'Are you sure you want to delete this prayer?', 'Delete', '#c0392b', async () => {
+    const token = await getValidToken();
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/prayers?id=eq.${prayerId}&user_id=eq.${currentUser.id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
+    });
+    if (res.ok) {
+      document.getElementById('wp-' + prayerId)?.remove();
+    } else {
+      swAlert('Could not delete', 'Please try again.');
+    }
+  });
+}
 </script>
 
 </body>
