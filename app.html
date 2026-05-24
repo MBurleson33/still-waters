@@ -1882,6 +1882,14 @@ let prayerLoaded = false;
 let profileLoaded = false;
 
 // ── TOKEN ──
+async function getValidToken() {
+  // Refresh if expired or close to expiry before returning
+  if (isTokenExpired()) {
+    await refreshSession();
+  }
+  return getToken();
+}
+
 function getToken() {
   const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
   if (sbKey) { try { const s = JSON.parse(localStorage.getItem(sbKey)); if (s?.access_token) return s.access_token; } catch {} }
@@ -2247,7 +2255,7 @@ function setPostType(type) {
 async function submitPost() {
   const body = document.getElementById('composeText').value.trim();
   if (!body) return;
-  const token = getToken();
+  const token = await getValidToken();
   const btn = document.getElementById('postBtn');
   btn.textContent = 'Posting…'; btn.disabled = true;
   const scriptureRef = document.getElementById('scriptureRef')?.value?.trim() || null;
@@ -2381,7 +2389,7 @@ function toggleWritePrayer(postId) {
 }
 
 async function togglePray(btn, postId) {
-  const token = getToken();
+  const token = await getValidToken();
   const hasPrayed = btn.classList.contains('active');
 
   // Optimistic UI
@@ -2429,7 +2437,7 @@ async function togglePray(btn, postId) {
 }
 
 async function submitWrittenPrayer(postId) {
-  const token = getToken();
+  const token = await getValidToken();
   const textarea = document.getElementById('prt-' + postId);
   const body = textarea.value.trim();
   if (!body) return;
@@ -2468,7 +2476,7 @@ async function submitWrittenPrayer(postId) {
 // SHARED SELAH
 // ══════════════════════════════════════
 async function toggleSelah(btn, postId, context) {
-  const token = getToken();
+  const token = await getValidToken();
   const countEl = btn.querySelector('.selah-count');
   const current = parseInt(countEl.textContent.replace(/\D/g,''));
   const isActive = btn.classList.contains('active');
@@ -2949,7 +2957,7 @@ async function _deleteAccountConfirmed() {
 // FOLLOW SYSTEM
 // ══════════════════════════════════════
 async function toggleFollow(btn, userId, name) {
-  const token = getToken();
+  const token = await getValidToken();
   const isFollowing = followingIds.includes(userId);
 
   if (isFollowing) {
@@ -3364,7 +3372,7 @@ async function loadComments(postId) {
 }
 
 async function submitComment(postId) {
-  const token = getToken();
+  const token = await getValidToken();
   const input = document.getElementById('cinput-' + postId);
   const body = input.value.trim();
   if (!body) return;
@@ -3794,7 +3802,7 @@ async function submitDetailComment() {
   const input = document.getElementById('pdCommentInput');
   const body = input.value.trim();
   if (!body || !detailPostId) return;
-  const token = getToken();
+  const token = await getValidToken();
   input.value = ''; input.style.height = 'auto';
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
