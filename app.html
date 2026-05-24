@@ -3723,18 +3723,22 @@ async function openPostDetail(postId) {
     pdAvatar.textContent = (currentProfile?.full_name || 'M')[0].toUpperCase();
   }
 
-  // Fetch post with profile and selahs
-  const [postRes, commentsRes] = await Promise.all([
+  // Fetch post, comments, and written prayers (for prayer posts)
+  const [postRes, commentsRes, prayersRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=*,profile:profiles(id,full_name,avatar_url),selahs(user_id)`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
     fetch(`${SUPABASE_URL}/rest/v1/comments?post_id=eq.${postId}&select=*,profile:profiles(id,full_name,avatar_url)&order=created_at.asc`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    }),
+    fetch(`${SUPABASE_URL}/rest/v1/prayers?post_id=eq.${postId}&select=*,profile:profiles(full_name,avatar_url)&order=created_at.asc`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     })
   ]);
 
   const posts = postRes.ok ? await postRes.json() : [];
   const comments = commentsRes.ok ? await commentsRes.json() : [];
+  const writtenPrayers = prayersRes.ok ? await prayersRes.json() : [];
   const post = posts[0];
   if (!post) { document.getElementById('postDetailPost').innerHTML = '<div style="padding:20px;color:var(--clay);">Post not found.</div>'; return; }
 
@@ -3772,6 +3776,34 @@ async function openPostDetail(postId) {
   // Render comments
   const label = document.getElementById('postDetailCommentsLabel');
   label.textContent = comments.length ? `Comments · ${comments.length}` : 'Comments';
+
+  // Add written prayers section for prayer posts
+  if (post.type === 'prayer' && writtenPrayers.length > 0) {
+    const prayerSection = document.createElement('div');
+    prayerSection.style.cssText = 'padding: 16px 20px 8px; border-top: 1px solid var(--linen);';
+    prayerSection.innerHTML = `
+      <div style="font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--clay);margin-bottom:14px;">Prayers written · ${writtenPrayers.length}</div>
+      ${writtenPrayers.map(wp => {
+        const wpp = wp.profile || {};
+        const wpn = wpp.full_name || 'Someone';
+        const wpa = wpp.avatar_url
+          ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>`
+          : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
+        return `
+          <div class="written-prayer-item">
+            ${wpa}
+            <div class="written-prayer-bubble">
+              <div class="written-prayer-name">${wpn}</div>
+              <div class="written-prayer-text">${wp.body}</div>
+            </div>
+          </div>`;
+      }).join('')}
+    `;
+    document.getElementById('postDetailBody').insertBefore(
+      prayerSection,
+      document.getElementById('postDetailCommentsList').parentElement
+    );
+  }
 
   const list = document.getElementById('postDetailCommentsList');
   if (!comments.length) {
