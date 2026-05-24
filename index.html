@@ -824,7 +824,22 @@ footer {
   <div style="display:flex;gap:20px;justify-content:center;margin-top:12px;">
     <a href="/privacy" style="font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">Privacy Policy</a>
     <a href="/terms" style="font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">Terms of Service</a>
+    <button onclick="shareLanding()" style="font-size:12px;color:rgba(255,255,255,0.4);background:none;border:none;cursor:pointer;font-family:inherit;transition:color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">Share</button>
   </div>
+
+  <script>
+  function shareLanding() {
+    const text = 'Still Waters — a faith community built around prayer, Scripture, and unhurried connection. No algorithm. No ads. Free to join.';
+    const url = 'https://by-still-waters.com';
+    if (navigator.share) {
+      navigator.share({ title: 'Still Waters', text, url });
+    } else {
+      navigator.clipboard.writeText(`${text}\n\n${url}`).then(() => {
+        alert('Link copied!');
+      });
+    }
+  }
+  </script>
 </footer>
 
 <script>
