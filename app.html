@@ -2518,7 +2518,7 @@ async function renderProfile() {
   const token = getToken();
 
   const [postsRes, selahsRes, followersRes, followingRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id)&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } })
@@ -2561,6 +2561,17 @@ async function renderProfile() {
     const selahCount = post.selahs ? post.selahs.length : 0;
     const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
+    const writtenPrayers = post.prayers || [];
+    const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
+      <div class="written-prayers">
+        <div class="written-prayers-label">Prayers written · ${writtenPrayers.length}</div>
+        ${writtenPrayers.map(wp => {
+          const wpp = wp.profile || {};
+          const wpn = wpp.full_name || 'Someone';
+          const wpa = wpp.avatar_url ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>` : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
+          return `<div class="written-prayer-item">${wpa}<div class="written-prayer-bubble"><div class="written-prayer-name">${wpn}</div><div class="written-prayer-text">${wp.body}</div></div></div>`;
+        }).join('')}
+      </div>` : '';
     return `
       <div class="post-card ${post.type==='prayer'?'prayer-card':''}" id="post-${post.id}">
         <div class="post-meta">
@@ -2569,6 +2580,7 @@ async function renderProfile() {
         </div>
         <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
         ${scriptureBlock}
+        ${writtenPrayersHtml}
         <div class="post-actions">
           <span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>
           <button class="action-btn" onclick="sharePost('${post.id}','${currentProfile?.full_name||'me'}','${post.body.replace(/'/g,"\\'")}')">Share</button>
@@ -3035,7 +3047,7 @@ async function viewUserProfile(userId) {
     fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id)&order=created_at.desc`, {
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${userId}&select=id`, {
@@ -3106,6 +3118,17 @@ async function viewUserProfile(userId) {
       const selahCount = post.selahs ? post.selahs.length : 0;
       const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
       const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
+      const writtenPrayers = post.prayers || [];
+      const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
+        <div class="written-prayers">
+          <div class="written-prayers-label">Prayers written · ${writtenPrayers.length}</div>
+          ${writtenPrayers.map(wp => {
+            const wpp = wp.profile || {};
+            const wpn = wpp.full_name || 'Someone';
+            const wpa = wpp.avatar_url ? `<div class="written-prayer-avatar"><img src="${wpp.avatar_url}" alt="${wpn}" /></div>` : `<div class="written-prayer-avatar">${wpn[0]}</div>`;
+            return `<div class="written-prayer-item">${wpa}<div class="written-prayer-bubble"><div class="written-prayer-name">${wpn}</div><div class="written-prayer-text">${wp.body}</div></div></div>`;
+          }).join('')}
+        </div>` : '';
       return `
         <div class="post-card ${post.type==='prayer'?'prayer-card':''}" id="post-${post.id}">
           <div class="post-meta">
@@ -3114,6 +3137,7 @@ async function viewUserProfile(userId) {
           </div>
           <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
           ${scriptureBlock}
+          ${writtenPrayersHtml}
           <div class="post-actions">
             <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','user-profile')">
               <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
