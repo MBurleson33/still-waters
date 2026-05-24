@@ -2428,9 +2428,9 @@ async function togglePray(btn, postId) {
     if (postRes.ok) {
       const posts = await postRes.json();
       if (posts[0]) {
-        createNotification(posts[0].user_id, 'prayer', postId);
+        createNotification(posts[0].user_id, 'pray', postId);
         const actorName = currentProfile?.full_name || 'Someone';
-        sendPushNotification(posts[0].user_id, '🙏 Someone is praying', `${actorName} is praying for your request`, '/prayer', 'prayer');
+        sendPushNotification(posts[0].user_id, '🙏 Someone is praying', `${actorName} is praying for your request`, '/prayer', 'pray');
       }
     }
   }
@@ -3240,11 +3240,12 @@ async function loadNotifications() {
     const messages = {
       selah:   `<strong>${name}</strong> Selah'd your post`,
       prayer:  `<strong>${name}</strong> wrote a prayer for you`,
+      pray:    `<strong>${name}</strong> is praying for your request`,
       follow:  `<strong>${name}</strong> started following you`,
       comment: `<strong>${name}</strong> commented on your post`
     };
 
-    const iconColors = { selah: 'selah', prayer: 'prayer', follow: 'follow', comment: 'follow' };
+    const iconColors = { selah: 'selah', prayer: 'prayer', pray: 'prayer', follow: 'follow', comment: 'follow' };
     const icons = {
       selah:   `<svg viewBox="0 0 14 14" fill="none" stroke="var(--water-dk)" stroke-width="1.5"><path d="M7 1C7 1 2 5 2 8C2 10.2 4.3 12 7 12C9.7 12 12 10.2 12 8C12 5 7 1 7 1Z"/></svg>`,
       prayer:  `<svg viewBox="0 0 14 14" fill="none" stroke="var(--sage)" stroke-width="1.5"><path d="M7 1C7 1 3.5 4.5 3.5 7C3.5 8.9 5 10.5 7 10.5C9 10.5 10.5 8.9 10.5 7C10.5 4.5 7 1 7 1Z"/></svg>`,
@@ -3256,6 +3257,7 @@ async function loadNotifications() {
     const destinations = {
       selah:   n.post_id ? `openPostDetail('${n.post_id}')` : `navigate('feed')`,
       prayer:  `navigate('prayer')`,
+      pray:    `navigate('prayer')`,
       follow:  n.actor_id ? `viewUserProfile('${n.actor_id}')` : `navigate('search')`,
       comment: n.post_id ? `openPostDetail('${n.post_id}')` : `navigate('feed')`
     };
