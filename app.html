@@ -4496,6 +4496,8 @@ function renderWrittenPrayer(wp) {
 
 // ── START ──
 init();
+
+async function deleteWrittenPrayer(prayerId) {
   swConfirm('Delete prayer', 'Are you sure you want to delete this prayer?', 'Delete', '#c0392b', async () => {
     const token = await getValidToken();
     const res = await fetch(`${SUPABASE_URL}/rest/v1/prayers?id=eq.${prayerId}&user_id=eq.${currentUser.id}`, {
