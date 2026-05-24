@@ -602,7 +602,8 @@ function signInWithGoogle() {
   btn.disabled = true;
   btn.innerHTML = '<span style="opacity:0.6">Redirecting…</span>';
   const redirectTo = encodeURIComponent('https://by-still-waters.com/auth');
-  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
+  // Use flow=implicit for better Android Chrome compatibility
+  window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}&scopes=email%20profile`;
 }
 
 // ── EMAIL MAGIC LINK ──
