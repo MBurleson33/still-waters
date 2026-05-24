@@ -2272,6 +2272,7 @@ async function submitPost() {
     feedLoaded = false;
     loadFeed();
     feedLoaded = true;
+    profileLoaded = false; // Force profile to reload next visit
     if (currentPostType === 'prayer') { prayerLoaded = false; loadSidebarCounts(); }
   } else { swAlert('Something went wrong', 'Please try again.'); }
   btn.textContent = 'Share'; btn.disabled = false;
