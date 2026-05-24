@@ -2912,6 +2912,56 @@ async function completeOnboarding() {
   navigate('feed', true);
 }
 
+function reportBug() {
+  closeAvatarDropdown();
+
+  const overlay = document.getElementById('sw-modal-overlay');
+  document.getElementById('sw-modal-title').textContent = 'Report a bug';
+  document.getElementById('sw-modal-body').innerHTML = `
+    <p style="font-size:14px;color:var(--clay);margin-bottom:12px;font-weight:300;">Describe what happened and we'll look into it.</p>
+    <textarea id="bug-report-text" placeholder="What went wrong?" rows="4"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--linen);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--deep);background:var(--cream);outline:none;resize:none;line-height:1.5;"></textarea>
+    <div id="bug-report-status" style="font-size:12px;margin-top:8px;display:none;"></div>
+  `;
+  document.getElementById('sw-modal-actions').innerHTML = `
+    <button class="sw-modal-cancel" onclick="swModalClose()">Cancel</button>
+    <button class="sw-modal-confirm" style="background:var(--water-dk);" onclick="submitBugReport()">Send</button>
+  `;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('bug-report-text')?.focus(), 100);
+}
+
+async function submitBugReport() {
+  const text = document.getElementById('bug-report-text')?.value.trim();
+  const status = document.getElementById('bug-report-status');
+  const btn = document.querySelector('#sw-modal-actions .sw-modal-confirm');
+  if (!text) return;
+
+  btn.textContent = 'Sending…'; btn.disabled = true;
+
+  const token = await getValidToken();
+  const name = currentProfile?.full_name || 'A user';
+
+  const res = await fetch('/api/bug-report', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, message: text })
+  });
+
+  status.style.display = 'block';
+  if (res.ok) {
+    status.textContent = '✓ Report sent — thank you!';
+    status.style.color = 'var(--sage)';
+    btn.textContent = 'Sent!';
+    setTimeout(() => swModalClose(), 1500);
+  } else {
+    status.textContent = 'Could not send. Email burleson.matthew@gmail.com directly.';
+    status.style.color = 'var(--clay)';
+    btn.textContent = 'Send'; btn.disabled = false;
+  }
+}
+
 function toggleAvatarDropdown() {
   document.getElementById('avatarDropdown').classList.toggle('open');
 }
