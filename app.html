@@ -2162,7 +2162,7 @@ async function loadFeed() {
 
   let url;
   if (currentFeedTab === 'following') {
-    const ids = followingIds.join(',');
+    const ids = [...followingIds, currentUser.id].join(',');
     url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id)&user_id=in.(${ids})&order=created_at.desc&limit=30`;
   } else {
     // Discover — show everyone except yourself
@@ -2186,8 +2186,8 @@ async function loadFeed() {
   renderFeedPosts(posts, '');
 
   // Show first post nudge if user has never posted
-  const userPostCount = posts.filter(p => p.user_id === currentUser.id).length;
-  if (userPostCount === 0 && currentProfile && !currentProfile._nudgeDismissed) {
+  const userPostCount = parseInt(document.getElementById('statPosts')?.textContent) || posts.filter(p => p.user_id === currentUser.id).length;
+  if (userPostCount === 0 && currentProfile && !sessionStorage.getItem('nudge-dismissed')) {
     const existing = document.getElementById('first-post-nudge');
     if (!existing) {
       const nudge = document.createElement('div');
