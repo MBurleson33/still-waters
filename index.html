@@ -844,16 +844,45 @@ footer {
 
 <script>
 // If already logged in, go straight to the feed
-(function() {
+(async function() {
   const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
   if (!sbKey) return;
+
   try {
     const session = JSON.parse(localStorage.getItem(sbKey));
     if (!session?.access_token) return;
-    // Check if token is still valid (not expired)
-    if (session.expires_at && session.expires_at < Math.floor(Date.now() / 1000)) return;
-    // Has a valid session — go to feed
-    window.location.replace('/feed');
+
+    // If token still valid, go to feed
+    if (session.expires_at && session.expires_at > Math.floor(Date.now() / 1000)) {
+      window.location.replace('/feed');
+      return;
+    }
+
+    // Token expired — try to refresh silently
+    if (session.refresh_token) {
+      const res = await fetch('https://olhpiqxxofcwlkpvimug.supabase.co/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9saHBpcXh4b2Zjd2xrcHZpbXVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzgxMzgsImV4cCI6MjA5MDE1NDEzOH0.7t8CE_VxXzHCEpLIFOiwRFbgsWQWRQ42QxlESgE1tGQ',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: session.refresh_token })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          localStorage.setItem(sbKey, JSON.stringify({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+            expires_in: data.expires_in || 3600,
+            expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+            token_type: 'bearer'
+          }));
+          window.location.replace('/feed');
+        }
+      }
+    }
   } catch {}
 })();
 </script>
