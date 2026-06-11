@@ -2475,6 +2475,12 @@ async function togglePray(btn, postId) {
     if (badge) badge.innerHTML = `<div class="praying-dot"></div>${post.prays.length} praying`;
     updatePrayerSummary();
     loadSidebarCounts();
+    // Also update sidebar count directly for instant feedback
+    const sbPraying = document.getElementById('sb-prayer-praying');
+    if (sbPraying) {
+      const current = parseInt(sbPraying.textContent) || 0;
+      sbPraying.textContent = hasPrayed ? Math.max(0, current - 1) : current + 1;
+    }
     renderPrayerFeed();
   }
 
@@ -2533,11 +2539,18 @@ async function submitWrittenPrayer(postId) {
     textarea.value = '';
     toggleWritePrayer(postId);
     // Also insert into prays (upsert so duplicate taps don't error)
+    const post = allPrayerPosts.find(p => p.id === postId);
+    const alreadyPraying = post?.prays?.some(p => p.user_id === currentUser.id);
     await fetch(`${SUPABASE_URL}/rest/v1/prays`, {
       method: 'POST',
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'resolution=ignore-duplicates,return=minimal' },
       body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
     });
+    if (!alreadyPraying) {
+      if (post) post.prays = [...(post.prays || []), { user_id: currentUser.id }];
+      const sbPraying = document.getElementById('sb-prayer-praying');
+      if (sbPraying) sbPraying.textContent = (parseInt(sbPraying.textContent) || 0) + 1;
+    }
     // Notify post owner
     const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
