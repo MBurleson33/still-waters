@@ -1511,6 +1511,7 @@ input, textarea, select {
         <button class="filter-tab" onclick="setPrayerFilter('answered', this)">Answered</button>
       </div>
 
+      <div id="debug-banner" style="display:none;background:#1a1a1a;color:#0f0;font-family:monospace;font-size:11px;padding:10px;margin:8px 0;border-radius:8px;white-space:pre-wrap;word-break:break-all;"></div>
       <div id="prayer-feed">
         <div class="loading"><div class="spinner"></div>Loading…</div>
       </div>
@@ -2366,6 +2367,26 @@ function updatePrayerSummary() {
   document.getElementById('p-stat-answered').textContent = allPrayerPosts.filter(p => p.answered).length;
   const prayingCount = allPrayerPosts.filter(p => p.prays && p.prays.some(pr => pr.user_id === currentUser.id)).length;
   document.getElementById('p-stat-praying').textContent = prayingCount;
+
+  // DEBUG BANNER
+  const banner = document.getElementById('debug-banner');
+  if (banner) {
+    const myId = currentUser ? currentUser.id : 'NO USER';
+    const totalPrays = allPraysData.length;
+    const myPraysInData = allPraysData.filter(p => p.user_id === myId).length;
+    const myPraysInPosts = allPrayerPosts.filter(p => p.prays && p.prays.some(pr => pr.user_id === myId)).length;
+    const samplePost = allPrayerPosts[0];
+    const samplePrays = samplePost ? JSON.stringify(samplePost.prays) : 'no posts';
+    banner.style.display = 'block';
+    banner.textContent = [
+      'myId: ' + myId,
+      'allPraysData rows: ' + totalPrays,
+      'myPrays in allPraysData: ' + myPraysInData,
+      'myPrays in allPrayerPosts: ' + myPraysInPosts,
+      'post[0].prays: ' + samplePrays
+    ].join('
+');
+  }
 }
 
 function setPrayerFilter(filter, btn) {
