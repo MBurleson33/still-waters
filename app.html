@@ -1931,6 +1931,7 @@ let currentProfile = null;
 let currentView = 'feed';
 let currentPostType = 'thought';
 let allPrayerPosts = [];
+let postCache = {}; // id -> post data for safe sharePost lookups
 let currentPrayerFilter = 'all';
 let feedLoaded = false;
 let prayerLoaded = false;
@@ -2274,6 +2275,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
     feed.innerHTML = `${bannerHtml}<div class="empty-state">Nothing here yet.<span>Be the first to share something.</span></div>`;
     return;
   }
+  posts.forEach(p => { postCache[p.id] = p; });
   feed.innerHTML = bannerHtml + posts.map(post => {
     const p = post.profile || {};
     const name = p.full_name || 'Someone';
@@ -2317,7 +2319,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
           ${!isOwnPost ? `<button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','feed')">
             <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
           </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
-          ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>` : ''}
+          ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}')">Share</button>` : ''}
           ${(post.type === 'prayer' && !isOwnPost && !hasWrittenPrayer) ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>` : `<button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>`}
           ${isOwnPost ? `<button class="action-btn" style="margin-left:auto;color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>` : ''}
         </div>
@@ -2408,6 +2410,7 @@ async function loadPrayer() {
     ...post,
     prays: allPrays.filter(pr => pr.post_id === post.id)
   }));
+  allPrayerPosts.forEach(p => { postCache[p.id] = p; });
 
   updatePrayerSummary();
   renderPrayerFeed();
@@ -2489,7 +2492,7 @@ function renderPrayerFeed() {
           </button>` : ''}
           ${isOwnPrayer && !post.answered ? `<button class="action-btn" style="color:var(--sage);font-weight:500;" onclick="markAnswered('${post.id}')">Mark answered</button>` : (post.answered ? `<span style="font-size:12px;color:var(--water-dk);font-weight:500;">✓ Answered</span>` : '')}
           <button class="write-prayer-btn" onclick="toggleWritePrayer('${post.id}')">Write a prayer</button>
-          <button class="action-btn" style="color:var(--stone);font-size:12px;" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
+          <button class="action-btn" style="color:var(--stone);font-size:12px;" onclick="sharePost('${post.id}')">Share</button>
         </div>
         <div class="prayer-response-box" id="prb-${post.id}">
           <div class="prayer-response-label">Pray for ${name.split(' ')[0]}</div>
@@ -2711,6 +2714,7 @@ async function renderProfile() {
   const myPosts = document.getElementById('myPosts');
   if (!posts.length) { myPosts.innerHTML = `<div class="empty-state" style="font-size:16px;">Nothing shared yet.</div>`; return; }
 
+  posts.forEach(p => { postCache[p.id] = p; });
   myPosts.innerHTML = posts.map(post => {
     const selahCount = post.selahs ? post.selahs.length : 0;
     const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
@@ -2750,7 +2754,7 @@ async function renderProfile() {
         ${writtenPrayersHtml}
         <div class="post-actions">
           <span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>
-          ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}','${currentProfile?.full_name||'me'}','${post.body.replace(/'/g,"\\'")}')">Share</button>` : ''}
+          ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}')">Share</button>` : ''}
           <button class="action-btn comment-toggle" onclick="openPostDetail('${post.id}')">${commentBtnText}</button>
           <button class="action-btn" style="color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>
           <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
@@ -3395,6 +3399,7 @@ async function viewUserProfile(userId) {
   if (!posts.length) {
     postsList.innerHTML = `<div class="empty-state" style="font-size:16px;">Nothing shared yet.</div>`;
   } else {
+    posts.forEach(p => { postCache[p.id] = p; });
     postsList.innerHTML = posts.map(post => {
       const selahCount = post.selahs ? post.selahs.length : 0;
       const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
@@ -3435,7 +3440,7 @@ async function viewUserProfile(userId) {
             <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','user-profile')">
               <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
             </button>
-            ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>` : ''}
+            ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}')">Share</button>` : ''}
             <button class="action-btn comment-toggle" data-post="${post.id}" onclick="openPostDetail(this.dataset.post)">${commentBtnText}</button>
           </div>
           <div class="comment-thread" id="comments-${post.id}" style="${threadStyle}">
@@ -4022,7 +4027,10 @@ function renderQuotedPost(quoted) {
   return `<div class="quoted-post-block" onclick="openPostDetail('${quoted.id}')">    <div class="quoted-post-meta">${qAvatar}<span class="quoted-post-author">${qName}</span><span class="quoted-post-time">${getTimeAgo(quoted.created_at)}</span></div>    <div class="quoted-post-body">${qBody}</div>  </div>`;
 }
 
-async function sharePost(postId, authorName, body) {
+async function sharePost(postId) {
+  const post = postCache[postId];
+  const authorName = post?.profile?.full_name || 'Someone';
+  const body = post?.body || '';
   _sharePostId = postId;
   _sharePostData = { authorName, body };
   document.getElementById('share-textarea').value = '';
@@ -4183,7 +4191,7 @@ async function openPostDetail(postId) {
       ${!isOwnPost ? `<button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','detail')">
         <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
       </button>` : `<span style="font-size:13px;color:var(--stone);">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
-      <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
+      <button class="action-btn" onclick="sharePost('${post.id}')">Share</button>
     </div>
   `;
 
