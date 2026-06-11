@@ -2094,7 +2094,7 @@ window.addEventListener('popstate', e => {
 
 // ── SIDEBAR COUNTS ──
 async function loadSidebarCounts() {
-  const token = getToken();
+  const token = await getValidToken();
   const [openRes, prayingRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&answered=eq.false&select=id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
@@ -2532,6 +2532,12 @@ async function submitWrittenPrayer(postId) {
   if (res.ok) {
     textarea.value = '';
     toggleWritePrayer(postId);
+    // Also insert into prays (upsert so duplicate taps don't error)
+    await fetch(`${SUPABASE_URL}/rest/v1/prays`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'resolution=ignore-duplicates,return=minimal' },
+      body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
+    });
     // Notify post owner
     const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
