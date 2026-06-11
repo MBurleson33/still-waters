@@ -2211,11 +2211,11 @@ async function loadFeed() {
   let url;
   if (currentFeedTab === 'following') {
     const ids = [...new Set([...followingIds, currentUser.id])].join(',');
-    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!posts_quoted_post_id_fkey(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&user_id=in.(${ids})&order=created_at.desc&limit=30`;
+    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&user_id=in.(${ids})&order=created_at.desc&limit=30`;
   } else {
     // Discover — show posts from people you don't follow and aren't you
     const excludeIds = [...followingIds, currentUser.id].join(',');
-    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!posts_quoted_post_id_fkey(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&user_id=not.in.(${excludeIds})&order=created_at.desc&limit=30`;
+    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&user_id=not.in.(${excludeIds})&order=created_at.desc&limit=30`;
   }
 
   const res = await fetch(url, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } });
@@ -2390,7 +2390,7 @@ async function loadPrayer() {
   const token = getToken();
   const [postsRes, praysRes] = await Promise.all([
     fetch(
-      `${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&select=*,profile:profiles(full_name,avatar_url),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!posts_quoted_post_id_fkey(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc&limit=50`,
+      `${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&select=*,profile:profiles(full_name,avatar_url),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc&limit=50`,
       { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
     ),
     fetch(
@@ -2675,7 +2675,7 @@ async function renderProfile() {
   const token = getToken();
 
   const [postsRes, selahsRes, followersRes, followingRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url)),quoted:posts!posts_quoted_post_id_fkey(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } })
@@ -3332,7 +3332,7 @@ async function viewUserProfile(userId) {
     fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url)),quoted:posts!posts_quoted_post_id_fkey(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, {
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${userId}&select=id`, {
