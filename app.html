@@ -2474,8 +2474,7 @@ async function togglePray(btn, postId) {
     const badge = document.querySelector(`#pc-${postId} .praying-badge`);
     if (badge) badge.innerHTML = `<div class="praying-dot"></div>${post.prays.length} praying`;
     updatePrayerSummary();
-    loadSidebarCounts();
-    // Also update sidebar count directly for instant feedback
+    // Update sidebar count directly for instant feedback (no fetch needed)
     const sbPraying = document.getElementById('sb-prayer-praying');
     if (sbPraying) {
       const current = parseInt(sbPraying.textContent) || 0;
