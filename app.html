@@ -2493,6 +2493,7 @@ async function togglePray(btn, postId) {
   }
   // Always force prayer reload regardless of add/remove
   prayerLoaded = false;
+  if (currentView === 'prayer') { loadPrayer(); prayerLoaded = true; }
 }
 
 async function submitWrittenPrayer(postId) {
