@@ -3254,7 +3254,7 @@ async function viewUserProfile(userId) {
               <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
             </button>
             <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
-            <button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>
+            <button class="action-btn comment-toggle" data-post="${post.id}" onclick="toggleComments(this, this.dataset.post)">Comment</button>
           </div>
           <div class="comment-thread" id="comments-${post.id}">
             <div class="comment-list" id="comment-list-${post.id}"></div>
@@ -3493,8 +3493,9 @@ async function loadCommentsInline(postId) {
       </div>`;
   }).join('');
 
-  // Update button text only
-  const btn = document.querySelector(`[onclick="toggleComments(this,'${postId}')"]`);
+  // Update button text only — scope to the post card
+  const card = document.getElementById('post-' + postId);
+  const btn = card?.querySelector('.comment-toggle');
   if (btn) btn.textContent = `Comment · ${comments.length}`;
 }
 
