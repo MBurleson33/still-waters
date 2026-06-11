@@ -3491,22 +3491,55 @@ async function loadCommentsInline(postId) {
       </div>`;
   }).join('');
 
-  // Show comment thread expanded
+  // Show comments but use inline style so .open class stays available for toggleComments
   const thread = document.getElementById('comments-' + postId);
-  if (thread) thread.classList.add('open');
+  if (thread) {
+    thread.style.display = 'block';
+    thread.style.borderTop = '1px solid var(--linen)';
+    thread.style.padding = '14px 0 4px';
+    // Hide input row — only show when Comment is tapped
+    const inputRow = thread.querySelector('.comment-input-row');
+    if (inputRow) inputRow.style.display = 'none';
+  }
   const btn = document.querySelector(`[onclick="toggleComments(this,'${postId}')"]`);
   if (btn) btn.textContent = `Comment · ${comments.length}`;
 }
 
 async function toggleComments(btn, postId) {
   const thread = document.getElementById('comments-' + postId);
-  const isOpen = thread.classList.toggle('open');
-  btn.classList.toggle('active', isOpen);
+  const input = document.getElementById('cinput-' + postId);
+  const isAlreadyOpen = thread.classList.contains('open');
+  const inputRow = thread.querySelector('.comment-input-row');
 
-  if (isOpen) {
-    await loadComments(postId);
-    document.getElementById('cinput-' + postId)?.focus();
+  if (isAlreadyOpen) {
+    // Already open via toggleComments — scroll to input
+    if (inputRow) inputRow.style.display = 'flex';
+    setTimeout(() => {
+      input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      input?.focus();
+    }, 100);
+    return;
   }
+
+  // Check if inline-loaded (display:block but no .open class)
+  if (thread.style.display === 'block') {
+    // Show input row and focus
+    if (inputRow) inputRow.style.display = 'flex';
+    setTimeout(() => {
+      input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      input?.focus();
+    }, 100);
+    return;
+  }
+
+  // Not open at all — load and open
+  thread.classList.add('open');
+  btn.classList.add('active');
+  await loadComments(postId);
+  setTimeout(() => {
+    input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    input?.focus();
+  }, 100);
 }
 
 async function loadComments(postId) {
