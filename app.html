@@ -2560,7 +2560,7 @@ async function renderProfile() {
   const token = getToken();
 
   const [postsRes, selahsRes, followersRes, followingRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } })
@@ -2604,6 +2604,7 @@ async function renderProfile() {
     const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
     const writtenPrayers = post.prayers || [];
+    const postComments = post.comments || [];
     const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
       <div class="written-prayers">
         <div class="written-prayers-label">Prayers written · ${writtenPrayers.length}</div>
@@ -2614,6 +2615,16 @@ async function renderProfile() {
           return renderWrittenPrayer(wp);
         }).join('')}
       </div>` : '';
+    const commentListHtml = postComments.map(c => {
+      const cp = c.profile || {};
+      const cn = cp.full_name || 'Someone';
+      const ca = cp.avatar_url ? `<div class="comment-avatar"><img src="${cp.avatar_url}" alt="${cn}" /></div>` : `<div class="comment-avatar">${cn[0]}</div>`;
+      const isOwn = c.user_id === currentUser.id;
+      return `<div class="comment-item" id="comment-${c.id}">${ca}<div class="comment-bubble" style="flex:1;"><div style="display:flex;align-items:center;justify-content:space-between;"><div class="comment-author">${cn}</div>${isOwn ? `<button class="comment-delete" onclick="deleteComment('${c.id}','${post.id}')">✕</button>` : ''}</div><div class="comment-body">${c.body}</div><div class="comment-time">${getTimeAgo(c.created_at)}</div></div></div>`;
+    }).join('');
+    const commentBtnText = postComments.length ? `Comment · ${postComments.length}` : 'Comment';
+    const threadStyle = postComments.length ? 'display:block;' : '';
+    const inputStyle = postComments.length ? 'display:none;' : '';
     return `
       <div class="post-card ${post.type==='prayer'?'prayer-card':''}" id="post-${post.id}">
         <div class="post-meta">
@@ -2626,34 +2637,26 @@ async function renderProfile() {
         <div class="post-actions">
           <span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>
           <button class="action-btn" onclick="sharePost('${post.id}','${currentProfile?.full_name||'me'}','${post.body.replace(/'/g,"\\'")}')">Share</button>
-          <button class="action-btn comment-toggle" onclick="openPostDetail('${post.id}')">Comment</button>
+          <button class="action-btn comment-toggle" onclick="openPostDetail('${post.id}')">${commentBtnText}</button>
           <button class="action-btn" style="color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>
           <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
         </div>
-        <div class="comment-thread" id="comments-${post.id}">
-          <div class="comment-list" id="comment-list-${post.id}">
-            <div style="text-align:center;padding:12px 0;color:var(--clay);font-size:13px;">Loading…</div>
-          </div>
-          <div class="comment-input-row">
+        <div class="comment-thread" id="comments-${post.id}" style="${threadStyle}">
+          <div class="comment-list" id="comment-list-${post.id}">${commentListHtml}</div>
+          <div class="comment-input-row" style="${inputStyle}">
             <div class="comment-input-avatar" id="cAvatar-${post.id}">${currentProfile?.avatar_url ? `<img src="${currentProfile.avatar_url}" alt="me" />` : (currentProfile?.full_name||'M')[0].toUpperCase()}</div>
             <textarea class="comment-input" id="cinput-${post.id}" placeholder="Write a comment…" rows="1"
               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitComment('${post.id}')}"
               oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
             <button class="comment-send" onclick="submitComment('${post.id}')">
-              <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M13 1L6 8M13 1L9 13 6 8 1 5l12-4z"/>
-              </svg>
+              <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 1L6 8M13 1L9 13 6 8 1 5l12-4z"/></svg>
             </button>
           </div>
         </div>
       </div>`;
   }).join('');
 
-  // Auto-load comments for all profile posts
-  posts.forEach(post => {
-    updateCommentCount(post.id);
-    setTimeout(() => loadCommentsInline(post.id), 100);
-  });
+  // No more async comment loading needed
 }
 
 async function deletePost(postId, btn) {
@@ -3211,7 +3214,7 @@ async function viewUserProfile(userId) {
     fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc`, {
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${userId}&select=id`, {
@@ -3283,6 +3286,7 @@ async function viewUserProfile(userId) {
       const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
       const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
       const writtenPrayers = post.prayers || [];
+      const postComments = post.comments || [];
       const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
         <div class="written-prayers">
           <div class="written-prayers-label">Prayers written · ${writtenPrayers.length}</div>
@@ -3293,6 +3297,15 @@ async function viewUserProfile(userId) {
             return renderWrittenPrayer(wp);
           }).join('')}
         </div>` : '';
+      const commentListHtml = postComments.map(c => {
+        const cp = c.profile || {};
+        const cn = cp.full_name || 'Someone';
+        const ca = cp.avatar_url ? `<div class="comment-avatar"><img src="${cp.avatar_url}" alt="${cn}" /></div>` : `<div class="comment-avatar">${cn[0]}</div>`;
+        const isOwn = c.user_id === currentUser.id;
+        return `<div class="comment-item" id="comment-${c.id}">${ca}<div class="comment-bubble" style="flex:1;"><div style="display:flex;align-items:center;justify-content:space-between;"><div class="comment-author">${cn}</div>${isOwn ? `<button class="comment-delete" onclick="deleteComment('${c.id}','${post.id}')">✕</button>` : ''}</div><div class="comment-body">${c.body}</div><div class="comment-time">${getTimeAgo(c.created_at)}</div></div></div>`;
+      }).join('');
+      const commentBtnText = postComments.length ? `Comment · ${postComments.length}` : 'Comment';
+      const threadStyle = postComments.length ? 'display:block;' : '';
       return `
         <div class="post-card ${post.type==='prayer'?'prayer-card':''}" id="post-${post.id}">
           <div class="post-meta">
@@ -3307,26 +3320,14 @@ async function viewUserProfile(userId) {
               <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
             </button>
             <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
-            <button class="action-btn comment-toggle" data-post="${post.id}" onclick="openPostDetail(this.dataset.post)">Comment</button>
+            <button class="action-btn comment-toggle" data-post="${post.id}" onclick="openPostDetail(this.dataset.post)">${commentBtnText}</button>
           </div>
-          <div class="comment-thread" id="comments-${post.id}">
-            <div class="comment-list" id="comment-list-${post.id}"></div>
-            <div class="comment-input-row">
-              <div class="comment-input-avatar">${currentProfile?.avatar_url ? `<img src="${currentProfile.avatar_url}" alt="me" />` : (currentProfile?.full_name||'M')[0].toUpperCase()}</div>
-              <textarea class="comment-input" id="cinput-${post.id}" placeholder="Write a comment…" rows="1"
-                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitComment('${post.id}')}"
-                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-              <button class="comment-send" onclick="submitComment('${post.id}')">
-                <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 1L6 8M13 1L9 13 6 8 1 5l12-4z"/></svg>
-              </button>
-            </div>
+          <div class="comment-thread" id="comments-${post.id}" style="${threadStyle}">
+            <div class="comment-list" id="comment-list-${post.id}">${commentListHtml}</div>
           </div>
         </div>`;
     }).join('');
-    posts.forEach(p => {
-      updateCommentCount(p.id);
-      setTimeout(() => loadCommentsInline(p.id), 100);
-    });
+    // No more async comment loading needed
   }
 }
 
