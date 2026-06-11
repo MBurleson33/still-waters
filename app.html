@@ -2261,6 +2261,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
           </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
           <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
           <button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>
+          ${!isOwnPost && post.type === 'prayer' ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>` : ''}
           ${isOwnPost ? `<button class="action-btn" style="margin-left:auto;color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>` : ''}
         </div>
         <div class="comment-thread" id="comments-${post.id}">
@@ -2965,6 +2966,59 @@ function shareApp() {
     navigator.clipboard.writeText(`${text}\n\n${url}`).then(() => {
       showToast('Link copied to clipboard!');
     });
+  }
+}
+
+function openWritePrayerFromFeed(postId) {
+  const overlay = document.getElementById('sw-modal-overlay');
+  document.getElementById('sw-modal-title').textContent = 'Write a prayer';
+  document.getElementById('sw-modal-body').innerHTML = `
+    <p style="font-size:14px;color:var(--clay);margin-bottom:12px;font-weight:300;">Write a prayer for this request.</p>
+    <textarea id="feed-prayer-text" placeholder="Lord, I pray…" rows="4"
+      style="width:100%;padding:10px 12px;border:1.5px solid var(--linen);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--deep);background:var(--cream);outline:none;resize:none;line-height:1.5;font-style:italic;"></textarea>
+  `;
+  document.getElementById('sw-modal-actions').innerHTML = `
+    <button class="sw-modal-cancel" onclick="swModalClose()">Cancel</button>
+    <button class="sw-modal-confirm" style="background:var(--water-dk);" onclick="submitFeedPrayer('${postId}')">Send prayer</button>
+  `;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('feed-prayer-text')?.focus(), 100);
+}
+
+async function submitFeedPrayer(postId) {
+  const text = document.getElementById('feed-prayer-text')?.value.trim();
+  if (!text) return;
+  const btn = document.querySelector('#sw-modal-actions .sw-modal-confirm');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+
+  const token = await getValidToken();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/prayers`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json', 'Content-Profile': 'stillwaters',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ post_id: postId, user_id: currentUser.id, body: text })
+  });
+
+  if (res.ok) {
+    swModalClose();
+    showToast('Prayer sent 🙏');
+    const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
+    });
+    if (postRes.ok) {
+      const posts = await postRes.json();
+      if (posts[0] && posts[0].user_id !== currentUser.id) {
+        createNotification(posts[0].user_id, 'prayer', postId);
+        sendPushNotification(posts[0].user_id, '🙏 Someone prayed for you', `${currentProfile?.full_name || 'Someone'} wrote a prayer for you`, '/prayer', 'prayer');
+      }
+    }
+  } else {
+    btn.textContent = 'Send prayer'; btn.disabled = false;
+    showToast('Could not send — please try again.');
   }
 }
 
