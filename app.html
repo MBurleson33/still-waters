@@ -2482,6 +2482,8 @@ async function togglePray(btn, postId) {
     // Force prayer tab to reload next visit
     prayerLoaded = false;
   }
+  // Always force prayer reload regardless of add/remove
+  prayerLoaded = false;
 }
 
 async function submitWrittenPrayer(postId) {
