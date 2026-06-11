@@ -2347,6 +2347,7 @@ async function loadPrayer() {
   
   const posts = await postsRes.json();
   const allPrays = praysRes.ok ? await praysRes.json() : [];
+  allPraysData = allPrays;
 
   // Merge prays into posts
   allPrayerPosts = posts.map(post => ({
@@ -2358,10 +2359,13 @@ async function loadPrayer() {
   renderPrayerFeed();
 }
 
+let allPraysData = [];
+
 function updatePrayerSummary() {
   document.getElementById('p-stat-open').textContent = allPrayerPosts.filter(p => !p.answered).length;
   document.getElementById('p-stat-answered').textContent = allPrayerPosts.filter(p => p.answered).length;
-  document.getElementById('p-stat-praying').textContent = allPrayerPosts.filter(p => p.prays?.some(s => s.user_id === currentUser.id)).length;
+  const prayingCount = allPraysData.filter(pr => pr.user_id === currentUser.id).length;
+  document.getElementById('p-stat-praying').textContent = prayingCount;
 }
 
 function setPrayerFilter(filter, btn) {
@@ -2375,7 +2379,7 @@ function renderPrayerFeed() {
   const feed = document.getElementById('prayer-feed');
   let posts = allPrayerPosts;
   if (currentPrayerFilter === 'mine') posts = allPrayerPosts.filter(p => p.user_id === currentUser.id);
-  if (currentPrayerFilter === 'praying') posts = allPrayerPosts.filter(p => p.prays?.some(s => s.user_id === currentUser.id));
+  if (currentPrayerFilter === 'praying') posts = allPrayerPosts.filter(p => allPraysData.some(pr => pr.post_id === p.id && pr.user_id === currentUser.id));
   if (currentPrayerFilter === 'answered') posts = allPrayerPosts.filter(p => p.answered);
 
   if (!posts.length) {
