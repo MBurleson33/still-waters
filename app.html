@@ -2260,10 +2260,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
             <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
           </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
           <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
-          ${post.type === 'prayer' && !isOwnPost
-            ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>`
-            : `<button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>`
-          }
+          ${(post.type === 'prayer' && !isOwnPost) ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>` : `<button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>`}
           ${isOwnPost ? `<button class="action-btn" style="margin-left:auto;color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>` : ''}
         </div>
         <div class="comment-thread" id="comments-${post.id}">
