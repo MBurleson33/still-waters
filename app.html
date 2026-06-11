@@ -2652,7 +2652,7 @@ async function renderProfile() {
   // Auto-load comments for all profile posts
   posts.forEach(post => {
     updateCommentCount(post.id);
-    loadCommentsInline(post.id);
+    setTimeout(() => loadCommentsInline(post.id), 100);
   });
 }
 
@@ -3325,7 +3325,7 @@ async function viewUserProfile(userId) {
     }).join('');
     posts.forEach(p => {
       updateCommentCount(p.id);
-      loadCommentsInline(p.id);
+      setTimeout(() => loadCommentsInline(p.id), 100);
     });
   }
 }
