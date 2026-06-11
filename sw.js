@@ -1,5 +1,5 @@
 // Still Waters Service Worker
-const CACHE_NAME = 'still-waters-v2';
+const CACHE_NAME = 'still-waters-v4';
 const STATIC_ASSETS = [
   '/',
   '/feed',
