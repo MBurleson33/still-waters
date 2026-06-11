@@ -1576,15 +1576,10 @@ input, textarea, select {
 
         <!-- CENTER: Their posts -->
         <div class="profile-posts-col">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-            <button onclick="history.back()" style="width:34px;height:34px;border-radius:50%;border:none;background:var(--linen);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--bark);flex-shrink:0;transition:background 0.2s;" onmouseover="this.style.background='var(--stone)'" onmouseout="this.style.background='var(--linen)'">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13L5 8l5-5"/></svg>
-            </button>
-            <div class="posts-header" style="margin-bottom:0;flex:1;">
+          <div class="posts-header" style="margin-bottom:0;flex:1;">
               <div class="posts-rule"></div>
               <div class="posts-title" id="upPostsTitle">Posts</div>
             </div>
-          </div>
           <div id="userProfilePosts">
             <div class="loading"><div class="spinner"></div>Loading…</div>
           </div>
@@ -2165,8 +2160,9 @@ async function loadFeed() {
     const ids = followingIds.join(',');
     url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id)&user_id=in.(${ids})&order=created_at.desc&limit=30`;
   } else {
-    // Discover — show everyone except yourself
-    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id)&user_id=neq.${currentUser.id}&order=created_at.desc&limit=30`;
+    // Discover — show posts from people you don't follow and aren't you
+    const excludeIds = [...followingIds, currentUser.id].join(',');
+    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id)&user_id=not.in.(${excludeIds})&order=created_at.desc&limit=30`;
   }
 
   const res = await fetch(url, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } });
