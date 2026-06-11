@@ -2454,6 +2454,7 @@ async function togglePray(btn, postId) {
     if (badge) badge.innerHTML = `<div class="praying-dot"></div>${post.prays.length} praying`;
     updatePrayerSummary();
     loadSidebarCounts();
+    renderPrayerFeed();
   }
 
   if (hasPrayed) {
@@ -2462,11 +2463,19 @@ async function togglePray(btn, postId) {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Profile': 'stillwaters' }
     });
   } else {
-    await fetch(`${SUPABASE_URL}/rest/v1/prays`, {
+    const prayRes = await fetch(`${SUPABASE_URL}/rest/v1/prays`, {
       method: 'POST',
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
       body: JSON.stringify({ user_id: currentUser.id, post_id: postId })
     });
+    if (!prayRes.ok) {
+      const err = await prayRes.text();
+      showToast('⚠️ Could not save: ' + prayRes.status + ' ' + err.substring(0, 50));
+      // Revert UI
+      btn.classList.toggle('active');
+      btn.lastChild.textContent = ' Pray';
+      return;
+    }
     // Notify post owner
     const postRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${postId}&select=user_id`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
