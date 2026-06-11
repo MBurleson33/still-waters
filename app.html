@@ -2210,7 +2210,7 @@ async function loadFeed() {
 
   let url;
   if (currentFeedTab === 'following') {
-    const ids = followingIds.join(',');
+    const ids = [...new Set([...followingIds, currentUser.id])].join(',');
     url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&user_id=in.(${ids})&order=created_at.desc&limit=30`;
   } else {
     // Discover — show posts from people you don't follow and aren't you
