@@ -336,6 +336,35 @@ input, textarea, select {
 .post-scripture-block { background:var(--cream); border-left:2px solid var(--water); padding:11px 15px; border-radius:0 8px 8px 0; margin-bottom:14px; }
 .post-scripture-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:15px; color:var(--bark); line-height:1.6; }
 .post-scripture-ref { font-size:11px; color:var(--clay); margin-top:5px; }
+/* ── QUOTE POST ── */
+.quoted-post-block { background:var(--cream); border:1.5px solid var(--linen); border-radius:12px; padding:12px 14px; margin:10px 0 14px; cursor:pointer; }
+.quoted-post-block:hover { border-color:var(--water); }
+.quoted-post-meta { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.quoted-post-avatar { width:22px; height:22px; border-radius:50%; background:var(--linen); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:500; color:var(--clay); overflow:hidden; flex-shrink:0; }
+.quoted-post-avatar img { width:100%; height:100%; object-fit:cover; }
+.quoted-post-author { font-size:12px; font-weight:500; color:var(--deep); }
+.quoted-post-time { font-size:11px; color:var(--stone); }
+.quoted-post-body { font-size:13px; color:var(--bark); line-height:1.55; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* ── SHARE SHEET ── */
+#share-sheet-overlay { display:none; position:fixed; inset:0; background:rgba(30,24,18,0.45); z-index:300; align-items:flex-end; justify-content:center; }
+#share-sheet-overlay.open { display:flex; }
+#share-sheet { background:#fff; width:100%; max-width:600px; border-radius:24px 24px 0 0; padding:0 0 env(safe-area-inset-bottom,16px); max-height:85vh; display:flex; flex-direction:column; }
+.share-sheet-handle-wrap { display:flex; justify-content:center; padding:12px 0 8px; cursor:pointer; }
+.share-sheet-handle { width:36px; height:4px; background:var(--linen); border-radius:2px; }
+.share-sheet-header { padding:0 20px 12px; border-bottom:1px solid var(--linen); }
+.share-sheet-title { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:400; color:var(--deep); }
+.share-sheet-body { flex:1; overflow-y:auto; padding:16px 20px 24px; display:flex; flex-direction:column; gap:14px; }
+.share-textarea { width:100%; min-height:80px; border:none; outline:none; resize:none; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--deep); background:transparent; line-height:1.5; }
+.share-textarea::placeholder { color:var(--stone); }
+.share-quoted-preview { background:var(--cream); border:1.5px solid var(--linen); border-radius:12px; padding:12px 14px; }
+.share-quoted-author { font-size:12px; font-weight:500; color:var(--deep); margin-bottom:5px; }
+.share-quoted-body { font-size:13px; color:var(--bark); line-height:1.55; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+.share-sheet-footer { padding:12px 20px; border-top:1px solid var(--linen); display:flex; justify-content:flex-end; gap:10px; }
+.share-cancel-btn { background:none; border:none; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--clay); cursor:pointer; padding:8px 14px; }
+.share-post-btn { background:var(--deep); color:#fff; border:none; border-radius:20px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; padding:8px 22px; cursor:pointer; }
+.share-post-btn:disabled { opacity:0.5; cursor:default; }
+@media(min-width:700px) { #share-sheet-overlay { align-items:center; padding:24px; } #share-sheet { border-radius:20px; max-height:70vh; } .share-sheet-handle-wrap { display:none; } }
 .post-actions { display:flex; align-items:center; gap:10px; padding-top:12px; border-top:1px solid var(--linen); }
 .selah-btn {
   display:flex; align-items:center; gap:6px; padding:5px 14px; border-radius:20px;
@@ -1808,6 +1837,29 @@ input, textarea, select {
   </div>
 </div>
 
+<!-- SHARE SHEET -->
+<div id="share-sheet-overlay" onclick="closeShareSheetIfOutside(event)">
+  <div id="share-sheet">
+    <div class="share-sheet-handle-wrap" onclick="closeShareSheet()">
+      <div class="share-sheet-handle"></div>
+    </div>
+    <div class="share-sheet-header">
+      <div class="share-sheet-title">Share to your feed</div>
+    </div>
+    <div class="share-sheet-body">
+      <textarea class="share-textarea" id="share-textarea" placeholder="Add your thoughts…" rows="3"></textarea>
+      <div class="share-quoted-preview" id="share-quoted-preview">
+        <div class="share-quoted-author" id="share-quoted-author"></div>
+        <div class="share-quoted-body" id="share-quoted-body"></div>
+      </div>
+    </div>
+    <div class="share-sheet-footer">
+      <button class="share-cancel-btn" onclick="closeShareSheet()">Cancel</button>
+      <button class="share-post-btn" id="share-post-btn" onclick="submitSharePost()">Share</button>
+    </div>
+  </div>
+</div>
+
 <!-- CUSTOM CONFIRM/ALERT MODAL -->
 <div id="sw-modal-overlay">
   <div id="sw-modal">
@@ -2158,11 +2210,11 @@ async function loadFeed() {
   let url;
   if (currentFeedTab === 'following') {
     const ids = followingIds.join(',');
-    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&user_id=in.(${ids})&order=created_at.desc&limit=30`;
+    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&user_id=in.(${ids})&order=created_at.desc&limit=30`;
   } else {
     // Discover — show posts from people you don't follow and aren't you
     const excludeIds = [...followingIds, currentUser.id].join(',');
-    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&user_id=not.in.(${excludeIds})&order=created_at.desc&limit=30`;
+    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&user_id=not.in.(${excludeIds})&order=created_at.desc&limit=30`;
   }
 
   const res = await fetch(url, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } });
@@ -2236,6 +2288,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
       ? `<div class="post-avatar" onclick="viewUserProfile('${userId}')" style="cursor:pointer;"><img src="${avatarUrl}" alt="${name}" /></div>`
       : `<div class="post-avatar" onclick="viewUserProfile('${userId}')" style="cursor:pointer;">${initial}</div>`;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
+    const quotedBlock = post.quoted ? renderQuotedPost(post.quoted) : '';
     const followBtn = !isOwnPost ? `<button class="follow-pill ${isFollowing?'following':''}" onclick="toggleFollow(this,'${userId}','${name}')">${isFollowing?'Following':'Follow'}</button>` : '';
     const writtenPrayers = post.prayers || [];
     const hasWrittenPrayer = writtenPrayers.some(wp => wp.user_id === currentUser.id);
@@ -2258,12 +2311,13 @@ function renderFeedPosts(posts, bannerHtml = '') {
         </div>
         <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
         ${scriptureBlock}
+        ${quotedBlock}
         ${writtenPrayersHtml}
         <div class="post-actions">
           ${!isOwnPost ? `<button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','feed')">
             <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
           </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
-          <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
+          ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>` : ''}
           ${(post.type === 'prayer' && !isOwnPost && !hasWrittenPrayer) ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>` : `<button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>`}
           ${isOwnPost ? `<button class="action-btn" style="margin-left:auto;color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>` : ''}
         </div>
@@ -2334,7 +2388,7 @@ async function loadPrayer() {
   const token = getToken();
   const [postsRes, praysRes] = await Promise.all([
     fetch(
-      `${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&select=*,profile:profiles(full_name,avatar_url),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&order=created_at.desc&limit=50`,
+      `${SUPABASE_URL}/rest/v1/posts?type=eq.prayer&select=*,profile:profiles(full_name,avatar_url),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc&limit=50`,
       { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
     ),
     fetch(
@@ -2426,6 +2480,7 @@ function renderPrayerFeed() {
           <div><div class="prayer-author">${name}</div><div class="prayer-time">${getTimeAgo(post.created_at)}</div></div>
           ${badgeHtml}
         </div>
+        ${post.quoted ? renderQuotedPost(post.quoted) : ''}
         <div class="prayer-body">${post.body}</div>
         <div class="prayer-actions">
           ${!post.answered && !isOwnPrayer ? `<button class="pray-btn ${hasPrayed?'active':''}" onclick="togglePray(this,'${post.id}')">
@@ -2617,7 +2672,7 @@ async function renderProfile() {
   const token = getToken();
 
   const [postsRes, selahsRes, followersRes, followingRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${currentUser.id}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/selahs?user_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${currentUser.id}&select=id`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } })
@@ -2660,6 +2715,7 @@ async function renderProfile() {
     const selahCount = post.selahs ? post.selahs.length : 0;
     const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
+    const quotedBlock = post.quoted ? renderQuotedPost(post.quoted) : '';
     const writtenPrayers = post.prayers || [];
     const postComments = post.comments || [];
     const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
@@ -2690,10 +2746,11 @@ async function renderProfile() {
         </div>
         <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
         ${scriptureBlock}
+        ${quotedBlock}
         ${writtenPrayersHtml}
         <div class="post-actions">
           <span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>
-          <button class="action-btn" onclick="sharePost('${post.id}','${currentProfile?.full_name||'me'}','${post.body.replace(/'/g,"\\'")}')">Share</button>
+          ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}','${currentProfile?.full_name||'me'}','${post.body.replace(/'/g,"\\'")}')">Share</button>` : ''}
           <button class="action-btn comment-toggle" onclick="openPostDetail('${post.id}')">${commentBtnText}</button>
           <button class="action-btn" style="color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>
           <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
@@ -3271,7 +3328,7 @@ async function viewUserProfile(userId) {
     fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
-    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, {
+    fetch(`${SUPABASE_URL}/rest/v1/posts?user_id=eq.${userId}&select=*,selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url)),comments(id,body,user_id,created_at,profile:profiles(full_name,avatar_url)),quoted:posts!quoted_post_id(id,body,user_id,created_at,profile:profiles(full_name,avatar_url))&order=created_at.desc`, {
       headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' }
     }),
     fetch(`${SUPABASE_URL}/rest/v1/follows?following_id=eq.${userId}&select=id`, {
@@ -3342,6 +3399,7 @@ async function viewUserProfile(userId) {
       const selahCount = post.selahs ? post.selahs.length : 0;
       const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
       const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
+      const quotedBlock = post.quoted ? renderQuotedPost(post.quoted) : '';
       const writtenPrayers = post.prayers || [];
       const postComments = post.comments || [];
       const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
@@ -3371,12 +3429,13 @@ async function viewUserProfile(userId) {
           </div>
           <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
           ${scriptureBlock}
+          ${quotedBlock}
           ${writtenPrayersHtml}
           <div class="post-actions">
             <button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','user-profile')">
               <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
             </button>
-            <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
+            ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>` : ''}
             <button class="action-btn comment-toggle" data-post="${post.id}" onclick="openPostDetail(this.dataset.post)">${commentBtnText}</button>
           </div>
           <div class="comment-thread" id="comments-${post.id}" style="${threadStyle}">
@@ -3947,24 +4006,64 @@ async function _doMarkAnswered(postId) {
 }
 
 // ── SHARE POST ──
-async function sharePost(postId, authorName, body) {
-  const url = `${window.location.origin}/feed`;
-  const text = `"${body.substring(0,100)}${body.length > 100 ? '…' : ''}" — ${authorName} on Still Waters`;
+// ── SHARE / QUOTE POST ──
+let _sharePostId = null;
+let _sharePostData = null;
 
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: 'Still Waters', text, url });
-    } catch (e) {
-      // User cancelled — no action needed
-    }
+function renderQuotedPost(quoted) {
+  if (!quoted) return '';
+  const qp = quoted.profile || {};
+  const qName = qp.full_name || 'Someone';
+  const qInitial = qName[0].toUpperCase();
+  const qAvatar = qp.avatar_url
+    ? `<div class="quoted-post-avatar"><img src="${qp.avatar_url}" alt="${qName}" /></div>`
+    : `<div class="quoted-post-avatar">${qInitial}</div>`;
+  const qBody = quoted.body || '';
+  return `<div class="quoted-post-block" onclick="openPostDetail('${quoted.id}')">    <div class="quoted-post-meta">${qAvatar}<span class="quoted-post-author">${qName}</span><span class="quoted-post-time">${getTimeAgo(quoted.created_at)}</span></div>    <div class="quoted-post-body">${qBody}</div>  </div>`;
+}
+
+async function sharePost(postId, authorName, body) {
+  _sharePostId = postId;
+  _sharePostData = { authorName, body };
+  document.getElementById('share-textarea').value = '';
+  document.getElementById('share-quoted-author').textContent = authorName;
+  document.getElementById('share-quoted-body').textContent = body;
+  document.getElementById('share-sheet-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('share-textarea').focus(), 300);
+}
+
+function closeShareSheet() {
+  document.getElementById('share-sheet-overlay').classList.remove('open');
+  _sharePostId = null;
+  _sharePostData = null;
+}
+
+function closeShareSheetIfOutside(e) {
+  if (e.target === document.getElementById('share-sheet-overlay')) closeShareSheet();
+}
+
+async function submitSharePost() {
+  if (!_sharePostId) return;
+  const body = document.getElementById('share-textarea').value.trim();
+  if (!body) { showToast('Add your thoughts before sharing'); return; }
+  const btn = document.getElementById('share-post-btn');
+  btn.textContent = 'Sharing…'; btn.disabled = true;
+  const token = await getValidToken();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Profile': 'stillwaters', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ user_id: currentUser.id, type: 'thought', body, quoted_post_id: _sharePostId })
+  });
+  btn.textContent = 'Share'; btn.disabled = false;
+  if (res.ok) {
+    closeShareSheet();
+    showToast('Shared to your feed');
+    feedLoaded = false;
+    if (currentView === 'feed') { loadFeed(); feedLoaded = true; }
   } else {
-    // Fallback: copy link to clipboard
-    try {
-      await navigator.clipboard.writeText(url);
-      showToast('Link copied to clipboard');
-    } catch {
-      showToast('Copy this link: ' + url);
-    }
+    const err = await res.text();
+    showToast('Could not share: ' + res.status);
+    console.error(err);
   }
 }
 
