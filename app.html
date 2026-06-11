@@ -2347,6 +2347,7 @@ async function loadPrayer() {
   
   const posts = await postsRes.json();
   const allPrays = praysRes.ok ? await praysRes.json() : [];
+  console.log("allPrays loaded:", allPrays.length, "rows", JSON.stringify(allPrays.slice(0,3)));
   allPraysData = allPrays;
 
   // Merge prays into posts
@@ -2364,7 +2365,7 @@ let allPraysData = [];
 function updatePrayerSummary() {
   document.getElementById('p-stat-open').textContent = allPrayerPosts.filter(p => !p.answered).length;
   document.getElementById('p-stat-answered').textContent = allPrayerPosts.filter(p => p.answered).length;
-  const prayingCount = allPraysData.filter(pr => pr.user_id === currentUser.id).length;
+  const prayingCount = allPrayerPosts.filter(p => p.prays && p.prays.some(pr => pr.user_id === currentUser.id)).length;
   document.getElementById('p-stat-praying').textContent = prayingCount;
 }
 
