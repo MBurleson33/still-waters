@@ -3546,7 +3546,15 @@ async function loadCommentsInline(postId) {
       </div>`;
   }).join('');
 
-  // Update button text only — scope to the post card
+  // Show thread if there are comments, but keep input hidden
+  const thread = document.getElementById('comments-' + postId);
+  if (thread) {
+    thread.style.display = 'block';
+    const inputRow = thread.querySelector('.comment-input-row');
+    if (inputRow) inputRow.style.display = 'none';
+  }
+
+  // Update button text
   const card = document.getElementById('post-' + postId);
   const btn = card?.querySelector('.comment-toggle');
   if (btn) btn.textContent = `Comment · ${comments.length}`;
@@ -3554,11 +3562,28 @@ async function loadCommentsInline(postId) {
 
 async function toggleComments(btn, postId) {
   const thread = document.getElementById('comments-' + postId);
+  const inputRow = thread.querySelector('.comment-input-row');
+  const input = document.getElementById('cinput-' + postId);
+
+  // If thread visible via inline load (display:block but no .open class)
+  if (thread.style.display === 'block' && !thread.classList.contains('open')) {
+    thread.classList.add('open');
+    if (inputRow) inputRow.style.display = 'flex';
+    setTimeout(() => {
+      input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      input?.focus();
+    }, 100);
+    return;
+  }
+
   const isOpen = thread.classList.toggle('open');
   btn.classList.toggle('active', isOpen);
   if (isOpen) {
     await loadComments(postId);
-    setTimeout(() => document.getElementById('cinput-' + postId)?.focus(), 100);
+    setTimeout(() => {
+      input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      input?.focus();
+    }, 100);
   }
 }
 
