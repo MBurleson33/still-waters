@@ -2626,7 +2626,7 @@ async function renderProfile() {
         <div class="post-actions">
           <span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>
           <button class="action-btn" onclick="sharePost('${post.id}','${currentProfile?.full_name||'me'}','${post.body.replace(/'/g,"\\'")}')">Share</button>
-          <button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>
+          <button class="action-btn comment-toggle" onclick="openPostDetail('${post.id}')">Comment</button>
           <button class="action-btn" style="color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>
           <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
         </div>
@@ -3254,7 +3254,7 @@ async function viewUserProfile(userId) {
               <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
             </button>
             <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
-            <button class="action-btn comment-toggle" data-post="${post.id}" onclick="toggleComments(this, this.dataset.post)">Comment</button>
+            <button class="action-btn comment-toggle" data-post="${post.id}" onclick="openPostDetail(this.dataset.post)">Comment</button>
           </div>
           <div class="comment-thread" id="comments-${post.id}">
             <div class="comment-list" id="comment-list-${post.id}"></div>
