@@ -2158,11 +2158,11 @@ async function loadFeed() {
   let url;
   if (currentFeedTab === 'following') {
     const ids = followingIds.join(',');
-    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id)&user_id=in.(${ids})&order=created_at.desc&limit=30`;
+    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&user_id=in.(${ids})&order=created_at.desc&limit=30`;
   } else {
     // Discover — show posts from people you don't follow and aren't you
     const excludeIds = [...followingIds, currentUser.id].join(',');
-    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id)&user_id=not.in.(${excludeIds})&order=created_at.desc&limit=30`;
+    url = `${SUPABASE_URL}/rest/v1/posts?select=*,profile:profiles(id,full_name,avatar_url,username),selahs(user_id),prayers(id,body,user_id,profile:profiles(full_name,avatar_url))&user_id=not.in.(${excludeIds})&order=created_at.desc&limit=30`;
   }
 
   const res = await fetch(url, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } });
@@ -2237,6 +2237,13 @@ function renderFeedPosts(posts, bannerHtml = '') {
       : `<div class="post-avatar" onclick="viewUserProfile('${userId}')" style="cursor:pointer;">${initial}</div>`;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
     const followBtn = !isOwnPost ? `<button class="follow-pill ${isFollowing?'following':''}" onclick="toggleFollow(this,'${userId}','${name}')">${isFollowing?'Following':'Follow'}</button>` : '';
+    const writtenPrayers = post.prayers || [];
+    const hasWrittenPrayer = writtenPrayers.some(wp => wp.user_id === currentUser.id);
+    const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
+      <div class="written-prayers">
+        <div class="written-prayers-label">Prayers written · ${writtenPrayers.length}</div>
+        ${writtenPrayers.map(wp => renderWrittenPrayer(wp)).join('')}
+      </div>` : '';
 
     return `
       <div class="post-card ${post.type === 'prayer' ? 'prayer-card' : ''}" id="post-${post.id}">
@@ -2251,12 +2258,13 @@ function renderFeedPosts(posts, bannerHtml = '') {
         </div>
         <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
         ${scriptureBlock}
+        ${writtenPrayersHtml}
         <div class="post-actions">
           ${!isOwnPost ? `<button class="selah-btn ${hasSelahed?'active':''}" onclick="toggleSelah(this,'${post.id}','feed')">
             <span>✦</span><span>Selah</span><span class="selah-count">· ${selahCount}</span>
           </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
           <button class="action-btn" onclick="sharePost('${post.id}','${name}','${post.body.replace(/'/g,"\\'")}')">Share</button>
-          ${(post.type === 'prayer' && !isOwnPost) ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>` : `<button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>`}
+          ${(post.type === 'prayer' && !isOwnPost && !hasWrittenPrayer) ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>` : `<button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>`}
           ${isOwnPost ? `<button class="action-btn" style="margin-left:auto;color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>` : ''}
         </div>
         <div class="comment-thread" id="comments-${post.id}">
