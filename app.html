@@ -2288,7 +2288,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
       ? `<div class="post-avatar" onclick="viewUserProfile('${userId}')" style="cursor:pointer;"><img src="${avatarUrl}" alt="${name}" /></div>`
       : `<div class="post-avatar" onclick="viewUserProfile('${userId}')" style="cursor:pointer;">${initial}</div>`;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
-    const quotedBlock = post.quoted ? renderQuotedPost(post.quoted) : '';
+    const quotedBlock = post.quoted?.id ? renderQuotedPost(post.quoted) : '';
     const followBtn = !isOwnPost ? `<button class="follow-pill ${isFollowing?'following':''}" onclick="toggleFollow(this,'${userId}','${name}')">${isFollowing?'Following':'Follow'}</button>` : '';
     const writtenPrayers = post.prayers || [];
     const hasWrittenPrayer = writtenPrayers.some(wp => wp.user_id === currentUser.id);
@@ -2480,7 +2480,7 @@ function renderPrayerFeed() {
           <div><div class="prayer-author">${name}</div><div class="prayer-time">${getTimeAgo(post.created_at)}</div></div>
           ${badgeHtml}
         </div>
-        ${post.quoted ? renderQuotedPost(post.quoted) : ''}
+        ${post.quoted?.id ? renderQuotedPost(post.quoted) : ''}
         <div class="prayer-body">${post.body}</div>
         <div class="prayer-actions">
           ${!post.answered && !isOwnPrayer ? `<button class="pray-btn ${hasPrayed?'active':''}" onclick="togglePray(this,'${post.id}')">
@@ -2715,7 +2715,7 @@ async function renderProfile() {
     const selahCount = post.selahs ? post.selahs.length : 0;
     const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
     const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
-    const quotedBlock = post.quoted ? renderQuotedPost(post.quoted) : '';
+    const quotedBlock = post.quoted?.id ? renderQuotedPost(post.quoted) : '';
     const writtenPrayers = post.prayers || [];
     const postComments = post.comments || [];
     const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
@@ -3399,7 +3399,7 @@ async function viewUserProfile(userId) {
       const selahCount = post.selahs ? post.selahs.length : 0;
       const hasSelahed = post.selahs ? post.selahs.some(s => s.user_id === currentUser.id) : false;
       const scriptureBlock = post.scripture_ref ? `<div class="post-scripture-block"><div class="post-scripture-text">${post.scripture_ref}</div></div>` : '';
-      const quotedBlock = post.quoted ? renderQuotedPost(post.quoted) : '';
+      const quotedBlock = post.quoted?.id ? renderQuotedPost(post.quoted) : '';
       const writtenPrayers = post.prayers || [];
       const postComments = post.comments || [];
       const writtenPrayersHtml = (post.type === 'prayer' && writtenPrayers.length) ? `
@@ -4011,7 +4011,7 @@ let _sharePostId = null;
 let _sharePostData = null;
 
 function renderQuotedPost(quoted) {
-  if (!quoted) return '';
+  if (!quoted || !quoted.id) return '';
   const qp = quoted.profile || {};
   const qName = qp.full_name || 'Someone';
   const qInitial = qName[0].toUpperCase();
