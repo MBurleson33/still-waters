@@ -3469,11 +3469,11 @@ async function loadCommentsInline(postId) {
     { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Accept-Profile': 'stillwaters' } }
   );
 
-  if (!res.ok) { list.innerHTML = ''; return; }
+  if (!res.ok) return;
   const comments = await res.json();
+  if (!comments.length) return;
 
-  if (!comments.length) { list.innerHTML = ''; return; }
-
+  // Just populate the list — don't open the thread or touch any classes/styles
   list.innerHTML = comments.map(c => {
     const cp = c.profile || {};
     const cn = cp.full_name || 'Someone';
@@ -3482,64 +3482,30 @@ async function loadCommentsInline(postId) {
     return `
       <div class="comment-item" id="comment-${c.id}">
         ${ca}
-        <div class="comment-bubble">
-          <div class="comment-author">${cn}</div>
-          <div class="comment-text">${c.body}</div>
+        <div class="comment-bubble" style="flex:1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="comment-author">${cn}</div>
+            ${isOwn ? `<button class="comment-delete" onclick="deleteComment('${c.id}','${postId}')">✕</button>` : ''}
+          </div>
+          <div class="comment-body">${c.body}</div>
           <div class="comment-time">${getTimeAgo(c.created_at)}</div>
         </div>
-        ${isOwn ? `<button class="comment-delete" onclick="deleteComment('${c.id}','${postId}')">×</button>` : ''}
       </div>`;
   }).join('');
 
-  // Show comments but use inline style so .open class stays available for toggleComments
-  const thread = document.getElementById('comments-' + postId);
-  if (thread) {
-    thread.style.display = 'block';
-    thread.style.borderTop = '1px solid var(--linen)';
-    thread.style.padding = '14px 0 4px';
-    // Hide input row — only show when Comment is tapped
-    const inputRow = thread.querySelector('.comment-input-row');
-    if (inputRow) inputRow.style.display = 'none';
-  }
+  // Update button text only
   const btn = document.querySelector(`[onclick="toggleComments(this,'${postId}')"]`);
   if (btn) btn.textContent = `Comment · ${comments.length}`;
 }
 
 async function toggleComments(btn, postId) {
   const thread = document.getElementById('comments-' + postId);
-  const input = document.getElementById('cinput-' + postId);
-  const isAlreadyOpen = thread.classList.contains('open');
-  const inputRow = thread.querySelector('.comment-input-row');
-
-  if (isAlreadyOpen) {
-    // Already open via toggleComments — scroll to input
-    if (inputRow) inputRow.style.display = 'flex';
-    setTimeout(() => {
-      input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      input?.focus();
-    }, 100);
-    return;
+  const isOpen = thread.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+  if (isOpen) {
+    await loadComments(postId);
+    setTimeout(() => document.getElementById('cinput-' + postId)?.focus(), 100);
   }
-
-  // Check if inline-loaded (display:block but no .open class)
-  if (thread.style.display === 'block') {
-    // Show input row and focus
-    if (inputRow) inputRow.style.display = 'flex';
-    setTimeout(() => {
-      input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      input?.focus();
-    }, 100);
-    return;
-  }
-
-  // Not open at all — load and open
-  thread.classList.add('open');
-  btn.classList.add('active');
-  await loadComments(postId);
-  setTimeout(() => {
-    input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    input?.focus();
-  }, 100);
 }
 
 async function loadComments(postId) {
