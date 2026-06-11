@@ -2347,7 +2347,6 @@ async function loadPrayer() {
   
   const posts = await postsRes.json();
   const allPrays = praysRes.ok ? await praysRes.json() : [];
-  console.log("allPrays loaded:", allPrays.length, "rows", JSON.stringify(allPrays.slice(0,3)));
   allPraysData = allPrays;
 
   // Merge prays into posts
