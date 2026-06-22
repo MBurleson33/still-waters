@@ -454,8 +454,14 @@ input, textarea, select {
 .compose-top { display:flex; align-items:flex-start; gap:12px; }
 .compose-avatar { width:36px; height:36px; border-radius:50%; background:var(--water-lt); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--water-dk); flex-shrink:0; margin-top:2px; overflow:hidden; }
 .compose-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-.compose-textarea { flex:1; border:none; outline:none; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:300; color:var(--deep); resize:none; min-height:60px; line-height:1.6; background:transparent; }
-.compose-textarea::placeholder { color:var(--stone); }
+.compose-editor { flex:1; border:none; outline:none; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:300; color:var(--deep); min-height:60px; line-height:1.6; background:transparent; }
+.compose-editor:empty:before { content:attr(data-placeholder); color:var(--stone); pointer-events:none; }
+.compose-toolbar { display:none; gap:4px; margin:8px 0 0 48px; }
+.compose-toolbar.visible { display:flex; }
+.toolbar-btn { background:none; border:1.5px solid var(--linen); border-radius:6px; padding:3px 8px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--clay); cursor:pointer; transition:all 0.15s; }
+.toolbar-btn:hover, .toolbar-btn.active { border-color:var(--water); color:var(--water-dk); background:var(--sage-xs); }
+.compose-editor ul { margin:4px 0 4px 18px; padding:0; }
+.compose-editor li { margin:2px 0; }
 .compose-types { display:flex; gap:6px; margin:12px 0 0 48px; padding-top:12px; border-top:1px solid var(--linen); flex-wrap:wrap; }
 .type-btn { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:20px; border:1.5px solid var(--linen); background:none; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--clay); cursor:pointer; transition:all 0.18s; }
 .type-btn:hover { border-color:var(--stone); color:var(--bark); }
@@ -875,10 +881,12 @@ input, textarea, select {
   width: 100%; border: 1.5px solid var(--linen); border-radius: 12px;
   padding: 14px; font-family: 'DM Sans', sans-serif;
   font-size: 15px; font-weight: 300; color: var(--deep);
-  line-height: 1.7; background: var(--cream); resize: none;
-  outline: none; min-height: 120px; transition: border-color 0.2s;
+  line-height: 1.7; background: var(--cream);
+  outline: none; min-height: 120px; transition: border-color 0.2s; box-sizing: border-box;
 }
 .edit-post-textarea:focus { border-color: var(--water); }
+.edit-post-textarea ul { margin: 4px 0 4px 18px; padding: 0; }
+.edit-post-textarea li { margin: 2px 0; }
 .edit-post-actions {
   display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px;
 }
@@ -1481,7 +1489,11 @@ input, textarea, select {
       <div class="compose">
         <div class="compose-top">
           <div class="compose-avatar" id="composeAvatar">M</div>
-          <textarea class="compose-textarea" id="composeText" placeholder="What's on your heart today?" rows="2"></textarea>
+          <div class="compose-editor" id="composeText" contenteditable="true" data-placeholder="What's on your heart today?" onInput="onComposeInput()" onFocus="showComposeToolbar()" onKeyDown="handleComposeKey(event)"></div>
+        </div>
+        <div class="compose-toolbar" id="composeToolbar">
+          <button class="toolbar-btn" id="tb-bold" onclick="formatCompose('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+          <button class="toolbar-btn" id="tb-bullet" onclick="formatCompose('bullet')" title="Bullet list">• List</button>
         </div>
         <div class="compose-types">
           <button class="type-btn active-thought" id="btn-thought" onclick="setPostType('thought')">
@@ -1788,7 +1800,11 @@ input, textarea, select {
       <div class="edit-post-title">Edit <em>post</em></div>
       <button class="post-detail-close" onclick="closeEditPost()">×</button>
     </div>
-    <textarea class="edit-post-textarea" id="editPostTextarea" placeholder="What's on your heart…"></textarea>
+    <div style="display:flex;gap:4px;margin-bottom:8px;">
+      <button class="toolbar-btn" onclick="document.getElementById('editPostTextarea').focus();document.execCommand('bold',false,null)"><b>B</b></button>
+      <button class="toolbar-btn" onclick="document.getElementById('editPostTextarea').focus();document.execCommand('insertUnorderedList',false,null)">• List</button>
+    </div>
+    <div class="edit-post-textarea" id="editPostTextarea" contenteditable="true"></div>
     <div class="edit-post-actions">
       <button class="edit-cancel" onclick="closeEditPost()">Cancel</button>
       <button class="edit-save" id="editPostSaveBtn" onclick="saveEditPost()">Save changes</button>
@@ -2311,7 +2327,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
           ${followBtn}
           <div class="post-type-tag tag-${post.type}">${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</div>
         </div>
-        <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
+        ${renderPostBody(post.body, post.id)}
         ${scriptureBlock}
         ${quotedBlock}
         ${writtenPrayersHtml}
@@ -2321,7 +2337,7 @@ function renderFeedPosts(posts, bannerHtml = '') {
           </button>` : `<span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>`}
           ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}')">Share</button>` : ''}
           ${(post.type === 'prayer' && !isOwnPost && !hasWrittenPrayer) ? `<button class="action-btn" style="color:var(--water-dk);" onclick="openWritePrayerFromFeed('${post.id}')">Write a prayer</button>` : `<button class="action-btn comment-toggle" onclick="toggleComments(this,'${post.id}')">Comment</button>`}
-          ${isOwnPost ? `<button class="action-btn" style="margin-left:auto;color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>` : ''}
+          ${isOwnPost ? `<button class="action-btn" style="margin-left:auto;color:var(--clay);" onclick="openEditPost('${post.id}')">Edit</button>` : ''}
         </div>
         <div class="comment-thread" id="comments-${post.id}">
           <div class="comment-list" id="comment-list-${post.id}">
@@ -2353,8 +2369,77 @@ function setPostType(type) {
   document.getElementById('scripturePicker').classList.toggle('visible', type === 'scripture');
 }
 
+// ── POST BODY RENDER ──
+function renderPostBody(body, postId) {
+  // If body has HTML tags, render as HTML; otherwise convert newlines to <br>
+  const hasHtml = /<[a-z][\s\S]*>/i.test(body);
+  const html = hasHtml ? body : body.replace(/\n/g, '<br>');
+  return `<div class="post-body" onclick="openPostDetail('${postId}')" style="cursor:pointer;">${html}</div>`;
+}
+
+// ── RICH TEXT COMPOSER ──
+function sanitizePostHtml(html) {
+  // Allow only b, strong, ul, li, br — strip everything else
+  return html
+    .replace(/<div><br\s*\/?><\/div>/gi, '<br>')
+    .replace(/<div>/gi, '<br>')
+    .replace(/<\/div>/gi, '')
+    .replace(/<(?!\/?(?:b|strong|ul|li|br))[^>]*>/gi, '')
+    .replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>')
+    .trim()
+    .replace(/^<br>|<br>$/g, '');
+}
+
+function getComposeBody() {
+  const el = document.getElementById('composeText');
+  return sanitizePostHtml(el.innerHTML);
+}
+
+function clearCompose() {
+  const el = document.getElementById('composeText');
+  el.innerHTML = '';
+  hideComposeToolbar();
+}
+
+function showComposeToolbar() {
+  document.getElementById('composeToolbar').classList.add('visible');
+}
+
+function hideComposeToolbar() {
+  document.getElementById('composeToolbar').classList.remove('visible');
+}
+
+function onComposeInput() {
+  const el = document.getElementById('composeText');
+  // Keep toolbar visible if there's content
+  if (el.innerHTML.replace(/<br>/gi,'').trim()) showComposeToolbar();
+  updateToolbarState();
+}
+
+function updateToolbarState() {
+  const isBold = document.queryCommandState('bold');
+  document.getElementById('tb-bold')?.classList.toggle('active', isBold);
+}
+
+function handleComposeKey(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+    e.preventDefault();
+    formatCompose('bold');
+  }
+}
+
+function formatCompose(cmd) {
+  document.getElementById('composeText').focus();
+  if (cmd === 'bold') {
+    document.execCommand('bold', false, null);
+    updateToolbarState();
+  } else if (cmd === 'bullet') {
+    document.execCommand('insertUnorderedList', false, null);
+  }
+}
+
 async function submitPost() {
-  const body = document.getElementById('composeText').value.trim();
+  const body = getComposeBody();
   if (!body) return;
   const token = await getValidToken();
   const btn = document.getElementById('postBtn');
@@ -2366,22 +2451,19 @@ async function submitPost() {
     body: JSON.stringify({ user_id: currentUser.id, type: currentPostType, body, scripture_ref: scriptureRef || null })
   });
   if (res.ok) {
-    document.getElementById('composeText').value = '';
-    document.getElementById('composeText').style.height = 'auto';
+    clearCompose();
     if (scriptureRef) document.getElementById('scriptureRef').value = '';
     setPostType('thought');
     feedLoaded = false;
     loadFeed();
     feedLoaded = true;
-    profileLoaded = false; // Force profile to reload next visit
+    profileLoaded = false;
     if (currentPostType === 'prayer') { prayerLoaded = false; loadSidebarCounts(); }
   } else { swAlert('Something went wrong', 'Please try again.'); }
   btn.textContent = 'Share'; btn.disabled = false;
 }
 
-document.getElementById('composeText').addEventListener('input', function() {
-  this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px';
-});
+document.getElementById('composeText').addEventListener('selectionchange', updateToolbarState);
 
 // ══════════════════════════════════════
 // PRAYER
@@ -2748,7 +2830,7 @@ async function renderProfile() {
           <div class="post-time">${getTimeAgo(post.created_at)}</div>
           <div class="post-type-tag tag-${post.type}">${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</div>
         </div>
-        <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
+        ${renderPostBody(post.body, post.id)}
         ${scriptureBlock}
         ${quotedBlock}
         ${writtenPrayersHtml}
@@ -2756,7 +2838,7 @@ async function renderProfile() {
           <span style="font-size:12px;color:var(--stone);padding:5px 0;">${selahCount > 0 ? '✦ ' + selahCount + ' Selah' : ''}</span>
           ${!post.quoted_post_id ? `<button class="action-btn" onclick="sharePost('${post.id}')">Share</button>` : ''}
           <button class="action-btn comment-toggle" onclick="openPostDetail('${post.id}')">${commentBtnText}</button>
-          <button class="action-btn" style="color:var(--clay);" onclick="openEditPost('${post.id}','${post.body.replace(/'/g,"\\'")}')">Edit</button>
+          <button class="action-btn" style="color:var(--clay);" onclick="openEditPost('${post.id}')">Edit</button>
           <button class="action-btn" style="margin-left:auto;color:var(--stone);" onclick="deletePost('${post.id}',this)">Delete</button>
         </div>
         <div class="comment-thread" id="comments-${post.id}" style="${threadStyle}">
@@ -3432,7 +3514,7 @@ async function viewUserProfile(userId) {
             <div class="post-time">${getTimeAgo(post.created_at)}</div>
             <div class="post-type-tag tag-${post.type}">${post.type.charAt(0).toUpperCase()+post.type.slice(1)}</div>
           </div>
-          <div class="post-body" onclick="openPostDetail('${post.id}')" style="cursor:pointer;">${post.body}</div>
+          ${renderPostBody(post.body, post.id)}
           ${scriptureBlock}
           ${quotedBlock}
           ${writtenPrayersHtml}
@@ -4302,17 +4384,16 @@ function closePostDetailIfOutside(e) {
 // ══════════════════════════════════════
 let editingPostId = null;
 
-function openEditPost(postId, currentBody) {
+function openEditPost(postId) {
+  const post = postCache[postId];
+  const currentBody = post?.body || '';
   editingPostId = postId;
-  document.getElementById('editPostTextarea').value = currentBody;
+  const el = document.getElementById('editPostTextarea');
+  const hasHtml = /<[a-z][\s\S]*>/i.test(currentBody);
+  el.innerHTML = hasHtml ? currentBody : currentBody.replace(/\n/g, '<br>');
   document.getElementById('editPostOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
-  setTimeout(() => {
-    const ta = document.getElementById('editPostTextarea');
-    ta.style.height = 'auto';
-    ta.style.height = ta.scrollHeight + 'px';
-    ta.focus();
-  }, 50);
+  setTimeout(() => { el.focus(); }, 50);
 }
 
 function closeEditPost() {
@@ -4327,7 +4408,7 @@ function closeEditPostIfOutside(e) {
 
 async function saveEditPost() {
   const token = getToken();
-  const body = document.getElementById('editPostTextarea').value.trim();
+  const body = sanitizePostHtml(document.getElementById('editPostTextarea').innerHTML);
   if (!body || !editingPostId) return;
 
   const btn = document.getElementById('editPostSaveBtn');
